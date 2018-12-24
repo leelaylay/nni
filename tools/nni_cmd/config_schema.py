@@ -83,6 +83,15 @@ Optional('assessor'): Or({
     },
     Optional('gpuNum'): And(int, lambda x: 0 <= x <= 99999)
 },{
+    'builtinAssessorName': lambda x: x in ['Curvefitting'],
+    Optional('classArgs'): {
+        'epoch_num': And(int, lambda x: 0 <= x <= 9999),
+        Optional('optimize_mode'): Or('maximize', 'minimize'),
+        Optional('start_step'): And(int, lambda x: 0 <= x <= 9999),
+        Optional('threshold'): And(float, lambda x: 0.0 <= x <= 9999.0)
+    },
+    Optional('gpuNum'): And(int, lambda x: 0 <= x <= 99999)
+},{
     'codeDir': os.path.exists,
     'classFileName': str,
     'className': str,
@@ -140,7 +149,7 @@ kubeflow_trial_schema = {
             'memoryMB': int,
             'image': str
         },
-        'worker':{
+        Optional('worker'):{
             'replicas': int,
             'command': str,
             'gpuNum': And(int, lambda x: 0 <= x <= 99999),
@@ -154,6 +163,7 @@ kubeflow_trial_schema = {
 kubeflow_config_schema = {
     'kubeflowConfig':Or({
         'operator': Or('tf-operator', 'pytorch-operator'),
+        'apiVersion': str,
         Optional('storage'): Or('nfs', 'azureStorage'),
         'nfs': {
             'server': str,
@@ -161,6 +171,7 @@ kubeflow_config_schema = {
         }
     },{
         'operator': Or('tf-operator', 'pytorch-operator'),
+        'apiVersion': str,
         Optional('storage'): Or('nfs', 'azureStorage'),
         'keyVault': {
             'vaultName': Regex('([0-9]|[a-z]|[A-Z]|-){1,127}'),

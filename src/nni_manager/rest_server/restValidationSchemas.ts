@@ -78,6 +78,7 @@ export namespace ValidationSchemas {
             kubeflow_config: joi.object({
                 operator: joi.string().min(1).required(),
                 storage: joi.string().min(1),
+                apiVersion: joi.string().min(1),
                 nfs: joi.object({
                     server: joi.string().min(1).required(),
                     path: joi.string().min(1).required()
@@ -113,9 +114,9 @@ export namespace ValidationSchemas {
                 codeDir: joi.string(),
                 classFileName: joi.string(),
                 className: joi.string(),
-                classArgs:joi.any(),
+                classArgs: joi.any(),
                 gpuNum: joi.number().min(0),
-                checkpointDir: joi.string()
+                checkpointDir: joi.string().allow('')
             }),
             tuner: joi.object({
                 builtinTunerName: joi.string().valid('TPE', 'Random', 'Anneal', 'Evolution', 'SMAC', 'BatchTuner', 'GridSearch', 'NetworkMorphism'),
@@ -124,16 +125,16 @@ export namespace ValidationSchemas {
                 className: joi.string(),
                 classArgs: joi.any(),
                 gpuNum: joi.number().min(0),
-                checkpointDir: joi.string()
+                checkpointDir: joi.string().allow('')
             }),
             assessor: joi.object({
-                builtinAssessorName: joi.string().valid('Medianstop'),
+                builtinAssessorName: joi.string().valid('Medianstop', 'Curvefitting'),
                 codeDir: joi.string(),
                 classFileName: joi.string(),
                 className: joi.string(),
                 classArgs: joi.any(),
                 gpuNum: joi.number().min(0),
-                checkpointDir: joi.string()
+                checkpointDir: joi.string().allow('')
             }),
             clusterMetaData: joi.array().items(joi.object({
                 key: joi.string(),
@@ -148,7 +149,7 @@ export namespace ValidationSchemas {
         body: {
             id: joi.string().required(),
             revision: joi.number().min(0).required(),
-            params: joi.object(STARTEXPERIMENT.body).required(),
+            params: joi.object(STARTEXPERIMENT.body),
             execDuration: joi.number().required(),
             startTime: joi.number(),
             endTime: joi.number(),
