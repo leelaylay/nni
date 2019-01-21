@@ -20,7 +20,8 @@
 
 import logging
 import os
-
+import string
+import random
 
 from nni.tuner import Tuner
 from nni.networkmorphism_tuner.bayesian import BayesianOptimizer
@@ -103,6 +104,8 @@ class NetworkMorphismTuner(Tuner):
 
         self.search_space = dict()
 
+        self.epoch_number = 0
+
     def update_search_space(self, search_space):
         """
         Update search space definition in tuner by search_space in neural architecture.
@@ -180,7 +183,19 @@ class NetworkMorphismTuner(Tuner):
             other_info: Anything to be saved in the training queue together with the architecture.
             generated_graph: An instance of Graph.
         """
-        generated_graph, new_father_id = self.bo.generate(self.descriptors)
+        generated_graph, new_father_id, temp_step_graph_list = self.bo.generate(self.descriptors)
+
+        self.epoch_number += 1
+        for item in temp_step_graph_list:
+            # dump log
+            id_graph = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            logger.info(id_graph + "," + str(item[0]) + "\n")
+            # dump json
+            graph_out = item[1]
+            json_model_path = os.path.join(self.path,id_graph + ".json")
+            json_out = graph_out.produce_json_model()
+            graph_to_json(json_out,json_model_path)
+
         if new_father_id is None:
             new_father_id = 0
             generated_graph = self.generators[0](

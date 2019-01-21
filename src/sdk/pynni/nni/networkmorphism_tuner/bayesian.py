@@ -18,7 +18,10 @@
 # OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ==================================================================================================
 
+
+import os
 import math
+import json
 import random
 from copy import deepcopy
 from functools import total_ordering
@@ -32,6 +35,8 @@ from sklearn.metrics.pairwise import rbf_kernel
 from nni.networkmorphism_tuner.graph_transformer import transform
 from nni.networkmorphism_tuner.utils import Constant, OptimizeMode
 from nni.networkmorphism_tuner.layers import is_layer
+
+from nni.networkmorphism_tuner.graph import graph_to_json, json_to_graph
 
 
 def layer_distance(a, b):
@@ -321,6 +326,7 @@ class BayesianOptimizer:
         self.gpr = IncrementalGaussianProcess()
         self.beta = beta if beta is not None else Constant.BETA
         self.search_tree = SearchTree()
+       
 
     def fit(self, x_queue, y_queue):
         """ Fit the optimizer with new architectures and performances.
@@ -364,6 +370,8 @@ class BayesianOptimizer:
         t_min = self.t_min
         alpha = 0.9
         opt_acq = self._get_init_opt_acq_value()
+        temp_step_graph_list = list()
+
         while not pq.empty() and t > t_min:
             elem = pq.get()
             if self.optimizemode is OptimizeMode.Maximize:
@@ -379,19 +387,21 @@ class BayesianOptimizer:
                     temp_acq_value = self.acq(temp_graph)
                     pq.put(elem_class(temp_acq_value, elem.father_id, temp_graph))
                     descriptors.append(temp_graph.extract_descriptor())
+                    temp_step_graph_list.append([temp_acq_value,temp_graph])
                     if self._accept_new_acq_value(opt_acq, temp_acq_value):
                         opt_acq = temp_acq_value
                         father_id = elem.father_id
                         target_graph = deepcopy(temp_graph)
             t *= alpha
 
+
         # Did not found a not duplicated architecture
         if father_id is None:
-            return None, None
+            return None, None, []
         nm_graph = self.searcher.load_model_by_id(father_id)
         for args in target_graph.operation_history:
             getattr(nm_graph, args[0])(*list(args[1:]))
-        return nm_graph, father_id
+        return nm_graph, father_id, temp_step_graph_list
 
     def acq(self, graph):
         ''' estimate the value of generated graph
