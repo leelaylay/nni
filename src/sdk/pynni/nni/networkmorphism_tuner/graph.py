@@ -577,6 +577,100 @@ class Graph:
         skip_output_id = self.add_layer(StubReLU(), skip_output_id)
         return skip_output_id
 
+    def extract_features(self, fix_len=20):
+        topo_node_list = self.topological_order
+        graph_features = np.zeros(fix_len)
+
+        model_size = self.produce_keras_model().count_params()
+        model_layer_number = len(topo_node_list)
+        count_conv = 0
+        count_dense = 0
+        count_batchnorm = 0
+        count_concat = 0
+        count_add = 0
+        count_pool = 0
+        count_dropout = 0
+        count_softmax = 0
+        count_relu = 0
+        count_flatten = 0
+        count_globalpool = 0
+
+        unit_max_conv = 0
+        unit_min_conv = 99999
+        unit_mean_conv = 0.0
+
+        unit_max_dense = 0
+        unit_min_dense = 99999
+        unit_mean_dense = 0.0
+
+        for v in topo_node_list:
+            for u, layer_idx in self.reverse_adj_list[v]:
+
+                layer = self.layer_list[layer_idx]
+
+                if is_layer(layer, "Conv"):
+                    count_conv += 1
+                    unit = layer.filters
+                    unit_max_conv = max(unit_max_conv, unit)
+                    unit_min_conv = min(unit_min_conv, unit)
+                    unit_mean_conv += unit
+                elif is_layer(layer, "Dense"):
+                    count_dense += 1
+                    unit = layer.units
+                    unit_max_dense = max(unit_max_dense, unit)
+                    unit_min_dense = min(unit_min_dense, unit)
+                    unit_mean_dense += unit
+
+                elif is_layer(layer, "BatchNormalization"):
+                    count_batchnorm += 1
+                elif is_layer(layer, "Concatenate"):
+                    count_concat += 1
+                elif is_layer(layer, "Add"):
+                    count_add += 1
+                elif is_layer(layer, "Pooling"):
+                    count_pool += 1
+                elif is_layer(layer, "Dropout"):
+                    count_dropout += 1
+                elif is_layer(layer, "Softmax"):
+                    count_softmax + 1
+                elif is_layer(layer, "ReLU"):
+                    count_relu += 1
+                elif is_layer(layer, "Flatten"):
+                    count_flatten += 1
+                elif is_layer(layer, "GlobalAveragePooling"):
+                    count_globalpool += 1
+
+        count_skip = count_concat + count_add
+
+        unit_mean_conv /= count_conv
+        unit_mean_dense /= count_dense
+
+        graph_features[0] = model_size
+        graph_features[1] = model_layer_number
+
+        graph_features[2] = count_conv
+        graph_features[3] = count_dense
+        graph_features[4] = count_batchnorm
+        graph_features[5] = count_concat
+        graph_features[6] = count_add
+        graph_features[7] = count_pool
+        graph_features[8] = count_dropout
+        graph_features[9] = count_softmax
+        graph_features[10] = count_relu
+        graph_features[11] = count_flatten
+        graph_features[12] = count_globalpool
+        graph_features[13] = count_skip
+
+        graph_features[14] = unit_max_conv
+        graph_features[15] = unit_min_conv
+        graph_features[16] = unit_mean_conv
+        graph_features[17] = unit_max_dense
+        graph_features[18] = unit_min_dense
+        graph_features[19] = unit_mean_dense
+
+        return graph_features
+
+
     def extract_descriptor(self):
         """Extract the the description of the Graph as an instance of NetworkDescriptor."""
         main_chain = self.get_main_chain()

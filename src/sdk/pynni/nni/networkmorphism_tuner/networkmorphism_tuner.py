@@ -23,7 +23,7 @@ import os
 
 
 from nni.tuner import Tuner
-from nni.networkmorphism_tuner.bayesian import BayesianOptimizer
+from nni.networkmorphism_tuner.nn_optimizer import NNOptimizer
 from nni.networkmorphism_tuner.nn import CnnGenerator, MlpGenerator
 from nni.networkmorphism_tuner.utils import Constant, OptimizeMode
 
@@ -41,11 +41,10 @@ class NetworkMorphismTuner(Tuner):
             input_width=32,
             input_channel=3,
             n_output_node=10,
-            algorithm_name="Bayesian",
+            algorithm_name="Simple",
             optimize_mode="maximize",
             path="model_path",
             verbose=True,
-            beta=Constant.BETA,
             t_min=Constant.T_MIN,
             max_model_size=Constant.MAX_MODEL_SIZE,
             default_model_len=Constant.MODEL_LEN,
@@ -57,11 +56,10 @@ class NetworkMorphismTuner(Tuner):
             input_width {int} -- [input sample shape] (default: {32})
             input_channel {int} -- [input sample shape] (default: {3})
             n_output_node {int} -- [output node number] (default: {10})
-            algorithm_name {str} -- [algorithm name used in the network morphism] (default: {"Bayesian"})
+            algorithm_name {str} -- [algorithm name used in the network morphism] (default: {"Simple"})
             optimize_mode {str} -- [optimize mode "minimize" or "maximize"] (default: {"minimize"})
             path {str} -- [default mode path to save the model file] (default: {"model_path"})
             verbose {bool} -- [verbose to print the log] (default: {True})
-            beta {float} -- [The beta in acquisition function. (refer to our paper)] (default: {Constant.BETA})
             t_min {float} -- [The minimum temperature for simulated annealing.] (default: {Constant.T_MIN})
             max_model_size {int} -- [max model size to the graph] (default: {Constant.MAX_MODEL_SIZE})
             default_model_len {int} -- [default model length] (default: {Constant.MODEL_LEN})
@@ -82,7 +80,6 @@ class NetworkMorphismTuner(Tuner):
         self.input_shape = (input_width, input_width, input_channel)
 
         self.t_min = t_min
-        self.beta = beta
         self.algorithm_name = algorithm_name
         self.optimize_mode = OptimizeMode(optimize_mode)
         self.json = None
@@ -90,7 +87,7 @@ class NetworkMorphismTuner(Tuner):
         self.verbose = verbose
         self.model_count = 0
 
-        self.bo = BayesianOptimizer(self, self.t_min, self.optimize_mode, self.beta)
+        self.nno = NNOptimizer(self, self.t_min, self.optimize_mode)
         self.training_queue = []
         # self.x_queue = []
         # self.y_queue = []
@@ -124,7 +121,7 @@ class NetworkMorphismTuner(Tuner):
             new_model_id = self.model_count
             self.model_count += 1
             self.training_queue.append((generated_graph, new_father_id, new_model_id))
-            self.descriptors.append(generated_graph.extract_descriptor())
+            self.descriptors.append(generated_graph.extract_features())
 
         graph, father_id, model_id = self.training_queue.pop(0)
 
@@ -152,7 +149,7 @@ class NetworkMorphismTuner(Tuner):
 
         (_, father_id, model_id) = self.total_data[parameter_id]
 
-        graph = self.bo.searcher.load_model_by_id(model_id)
+        graph = self.nno.searcher.load_model_by_id(model_id)
 
         # to use the value and graph
         self.add_model(reward, model_id)
@@ -169,7 +166,7 @@ class NetworkMorphismTuner(Tuner):
             model_id = self.model_count
             self.model_count += 1
             self.training_queue.append((graph, -1, model_id))
-            self.descriptors.append(graph.extract_descriptor())
+            self.descriptors.append(graph.extract_features())
 
         if self.verbose:
             logger.info("Initialization finished.")
@@ -180,7 +177,7 @@ class NetworkMorphismTuner(Tuner):
             other_info: Anything to be saved in the training queue together with the architecture.
             generated_graph: An instance of Graph.
         """
-        generated_graph, new_father_id = self.bo.generate(self.descriptors)
+        generated_graph, new_father_id = self.nno.generate(self.descriptors)
         if new_father_id is None:
             new_father_id = 0
             generated_graph = self.generators[0](
@@ -198,8 +195,8 @@ class NetworkMorphismTuner(Tuner):
             model_id: An integer.
         """
         father_id = other_info
-        self.bo.fit([graph.extract_descriptor()], [metric_value])
-        self.bo.add_child(father_id, model_id)
+        self.nno.fit([graph.extract_features()], [metric_value])
+        self.nno.add_child(father_id, model_id)
 
     def add_model(self, metric_value, model_id):
         """ Add model to the history, x_queue and y_queue
@@ -224,9 +221,6 @@ class NetworkMorphismTuner(Tuner):
             file.write("best model: " + str(model_id))
             file.close()
 
-        # descriptor = graph.extract_descriptor()
-        # self.x_queue.append(descriptor)
-        # self.y_queue.append(metric_value)
         return ret
 
     def get_best_model_id(self):

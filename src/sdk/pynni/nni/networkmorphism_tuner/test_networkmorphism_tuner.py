@@ -155,7 +155,7 @@ class NetworkMorphismTestCase(TestCase):
         self.assertEqual(model_json, json_out)
 
         ret = {"model_id": 0, "metric_value": 0.7}
-        self.assertEqual(tuner.bo.search_tree.adj_list[model_id], [])
+        self.assertEqual(tuner.nno.search_tree.adj_list[model_id], [])
         self.assertEqual(tuner.history[-1], ret)
 
     def test_update_search_space(self):

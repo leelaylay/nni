@@ -44,12 +44,12 @@ logger = logging.getLogger("cifar10-network-morphism-keras")
 
 
 # restrict gpu usage background
-config = tf.ConfigProto()
-# pylint: disable=E1101,W0603
-config.gpu_options.allow_growth = True
-sess = tf.Session(config=config)
+# config = tf.ConfigProto()
+# # pylint: disable=E1101,W0603
+# config.gpu_options.allow_growth = True
+# sess = tf.Session(config=config)
 
-KTF.set_session(sess)
+# KTF.set_session(sess)
 
 
 def get_args():
@@ -145,12 +145,10 @@ class SendMetrics(keras.callbacks.Callback):
     Keras callback to send metrics to NNI framework
     """
 
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs={}):
         """
         Run on end of each epoch
         """
-        if logs is None:
-            logs = dict()
         logger.debug(logs)
         nni.report_intermediate_result(logs["val_acc"])
 
@@ -175,15 +173,16 @@ def train_eval():
         validation_data=(x_test, y_test),
         epochs=args.epochs,
         shuffle=True,
+        verbose=0,
         callbacks=[
             SendMetrics(),
-            EarlyStopping(min_delta=0.001, patience=10),
             TensorBoard(log_dir=TENSORBOARD_DIR),
-        ],
+            EarlyStopping(min_delta=0.001, patience=10)
+        ]
     )
 
     # trial report final acc to tuner
-    _, acc = net.evaluate(x_test, y_test)
+    _, acc = net.evaluate(x_test, y_test, verbose=0)
     logger.debug("Final result is: %.3f", acc)
     nni.report_final_result(acc)
 
