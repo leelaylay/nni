@@ -189,12 +189,11 @@ class NetworkMorphismTuner(Tuner):
         for item in temp_step_graph_list:
             # dump log
             id_graph = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            logger.info(id_graph + "," + str(item[0]) + "\n")
+            logger.info("IM:"+str(self.epoch_number)+","+id_graph + "," + str(item[0]) + "\n")
             # dump json
             graph_out = item[1]
             json_model_path = os.path.join(self.path,id_graph + ".json")
-            json_out = graph_out.produce_json_model()
-            graph_to_json(json_out,json_model_path)
+            graph_to_json(graph_out, json_model_path)
 
         if new_father_id is None:
             new_father_id = 0
