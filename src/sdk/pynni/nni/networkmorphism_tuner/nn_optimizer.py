@@ -18,6 +18,8 @@
 # OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ==================================================================================================
 
+import os
+import json
 import math
 import random
 from copy import deepcopy
@@ -28,6 +30,7 @@ import numpy as np
 from nni.networkmorphism_tuner.graph_transformer import transform
 from nni.networkmorphism_tuner.layers import is_layer
 from nni.networkmorphism_tuner.utils import Constant, OptimizeMode
+from nni.networkmorphism_tuner.graph import graph_to_json, json_to_graph
 
 import lightgbm as lgb
 
@@ -85,8 +88,9 @@ class IncrementalRegressionProcess:
         if len(self._x) <= self.num_limit:
             return np.array([0.0] * len(valid_x))
 
+        lgb_train = lgb.Dataset(self._x, self._y)
         self.gbm = lgb.train(
-            params, lgb_train, n_estimators, verbose_eval=False)
+            self.params, lgb_train, self.n_estimators, verbose_eval=False)
         valid_x = np.array(valid_x)
         y_pred = self.gbm.predict(
             valid_x, num_iteration=self.gbm.best_iteration)
@@ -153,7 +157,7 @@ class NNOptimizer:
         t_min = self.t_min
         alpha = 0.9
         opt_acq = self._get_init_opt_acq_value()
-        predict_features = []
+        temp_step_graph_list = list()
         while not pq.empty() and t > t_min:
             elem = pq.get()
             if self.optimizemode is OptimizeMode.Maximize:
@@ -168,6 +172,8 @@ class NNOptimizer:
                         continue
                     temp_acq_value = self.acq(temp_features)
                     features.append(temp_features)
+                    pq.put(elem_class(temp_acq_value, elem.father_id, temp_graph))
+                    temp_step_graph_list.append([temp_acq_value,temp_graph])
                     if self._accept_new_acq_value(opt_acq, temp_acq_value):
                         opt_acq = temp_acq_value
                         father_id = elem.father_id
@@ -177,11 +183,11 @@ class NNOptimizer:
 
         # Did not found a not duplicated architecture
         if father_id is None:
-            return None, None
+            return None, None, []
         nm_graph = self.searcher.load_model_by_id(father_id)
         for args in target_graph.operation_history:
             getattr(nm_graph, args[0])(*list(args[1:]))
-        return nm_graph, father_id
+        return nm_graph, father_id, temp_step_graph_list
 
     def acq(self, graph_features):
         ''' estimate the value of generated graph

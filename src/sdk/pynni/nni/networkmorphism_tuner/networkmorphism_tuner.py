@@ -20,7 +20,8 @@
 
 import logging
 import os
-
+import string
+import random
 
 from nni.tuner import Tuner
 from nni.networkmorphism_tuner.nn_optimizer import NNOptimizer
@@ -99,6 +100,8 @@ class NetworkMorphismTuner(Tuner):
         self.default_model_width = default_model_width
 
         self.search_space = dict()
+        self.epoch_number = 0
+
 
     def update_search_space(self, search_space):
         """
@@ -177,7 +180,18 @@ class NetworkMorphismTuner(Tuner):
             other_info: Anything to be saved in the training queue together with the architecture.
             generated_graph: An instance of Graph.
         """
-        generated_graph, new_father_id = self.nno.generate(self.descriptors)
+
+        generated_graph, new_father_id, temp_step_graph_list = self.nno.generate(self.descriptors)
+        self.epoch_number += 1
+        for item in temp_step_graph_list:
+            # dump log
+            id_graph = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            logger.info("IM:"+str(self.epoch_number)+","+id_graph + "," + str(item[0]) + "\n")
+            # dump json
+            graph_out = item[1]
+            json_model_path = os.path.join(self.path,id_graph + ".json")
+            graph_to_json(graph_out, json_model_path)
+
         if new_father_id is None:
             new_father_id = 0
             generated_graph = self.generators[0](

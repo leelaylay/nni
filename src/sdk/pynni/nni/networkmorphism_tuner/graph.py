@@ -581,7 +581,7 @@ class Graph:
         topo_node_list = self.topological_order
         graph_features = np.zeros(fix_len)
 
-        model_size = self.produce_keras_model().count_params()
+        model_size = 0
         model_layer_number = len(topo_node_list)
         count_conv = 0
         count_dense = 0
@@ -597,16 +597,17 @@ class Graph:
 
         unit_max_conv = 0
         unit_min_conv = 99999
-        unit_mean_conv = 0.0
+        unit_mean_conv = 0
 
         unit_max_dense = 0
         unit_min_dense = 99999
-        unit_mean_dense = 0.0
+        unit_mean_dense = 0
 
         for v in topo_node_list:
             for u, layer_idx in self.reverse_adj_list[v]:
 
                 layer = self.layer_list[layer_idx]
+
 
                 if is_layer(layer, "Conv"):
                     count_conv += 1
@@ -614,29 +615,40 @@ class Graph:
                     unit_max_conv = max(unit_max_conv, unit)
                     unit_min_conv = min(unit_min_conv, unit)
                     unit_mean_conv += unit
+                    model_size += (layer.input_channel*layer.kernel_size*layer.kernel_size+1)*layer.filters
+
                 elif is_layer(layer, "Dense"):
                     count_dense += 1
                     unit = layer.units
                     unit_max_dense = max(unit_max_dense, unit)
                     unit_min_dense = min(unit_min_dense, unit)
                     unit_mean_dense += unit
+                    model_size += (layer.input_units+1)*layer.units
 
                 elif is_layer(layer, "BatchNormalization"):
                     count_batchnorm += 1
+                    model_size += layer.num_features*4
+
                 elif is_layer(layer, "Concatenate"):
                     count_concat += 1
                 elif is_layer(layer, "Add"):
+
                     count_add += 1
                 elif is_layer(layer, "Pooling"):
                     count_pool += 1
+
                 elif is_layer(layer, "Dropout"):
                     count_dropout += 1
+
                 elif is_layer(layer, "Softmax"):
                     count_softmax + 1
+
                 elif is_layer(layer, "ReLU"):
                     count_relu += 1
+
                 elif is_layer(layer, "Flatten"):
                     count_flatten += 1
+
                 elif is_layer(layer, "GlobalAveragePooling"):
                     count_globalpool += 1
 
@@ -645,7 +657,7 @@ class Graph:
         unit_mean_conv /= count_conv
         unit_mean_dense /= count_dense
 
-        graph_features[0] = model_size
+        graph_features[0] = model_size/1e4
         graph_features[1] = model_layer_number
 
         graph_features[2] = count_conv
