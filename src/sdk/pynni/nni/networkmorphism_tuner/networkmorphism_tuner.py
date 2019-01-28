@@ -183,6 +183,7 @@ class NetworkMorphismTuner(Tuner):
 
         generated_graph, new_father_id, temp_step_graph_list = self.nno.generate(self.descriptors)
         self.epoch_number += 1
+        logger.info("Testing:{}".format(len(temp_step_graph_list)))
         for item in temp_step_graph_list:
             # dump log
             id_graph = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))

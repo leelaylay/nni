@@ -657,7 +657,7 @@ class Graph:
         unit_mean_conv /= count_conv
         unit_mean_dense /= count_dense
 
-        graph_features[0] = model_size/1e4
+        graph_features[0] = model_size
         graph_features[1] = model_layer_number
 
         graph_features[2] = count_conv

@@ -46,4 +46,4 @@ class Constant:
     MLP_DROPOUT_RATE = 0.25
     CONV_BLOCK_DISTANCE = 2
     BATCH_SIZE = 128
-    T_MIN = 0.0001
+    T_MIN = 0.001

@@ -157,30 +157,31 @@ class NNOptimizer:
         t_min = self.t_min
         alpha = 0.9
         opt_acq = self._get_init_opt_acq_value()
-        temp_step_graph_list = list()
+        temp_step_graph_list = []
+        print("pq.qsize():{}".format(pq.qsize()))
         while not pq.empty() and t > t_min:
             elem = pq.get()
-            if self.optimizemode is OptimizeMode.Maximize:
-                temp_exp = min((elem.metric_value - opt_acq) / t, 1.0)
-            else:
-                temp_exp = min((opt_acq - elem.metric_value) / t, 1.0)
-            ap = math.exp(temp_exp)
-            if ap >= random.uniform(0, 1):
-                for temp_graph in transform(elem.graph):
-                    temp_features = temp_graph.extract_features()
-                    if contain(features, temp_features):
-                        continue
-                    temp_acq_value = self.acq(temp_features)
-                    features.append(temp_features)
-                    pq.put(elem_class(temp_acq_value, elem.father_id, temp_graph))
-                    temp_step_graph_list.append([temp_acq_value,temp_graph])
-                    if self._accept_new_acq_value(opt_acq, temp_acq_value):
-                        opt_acq = temp_acq_value
-                        father_id = elem.father_id
-                        target_graph = deepcopy(temp_graph)
+            # if self.optimizemode is OptimizeMode.Maximize:
+            #     temp_exp = min((elem.metric_value - opt_acq) / t, 1.0)
+            # else:
+            #     temp_exp = min((opt_acq - elem.metric_value) / t, 1.0)
+            # ap = math.exp(temp_exp)
+            # if ap >= random.uniform(0, 1):
+            for temp_graph in transform(elem.graph):
+                temp_features = temp_graph.extract_features()
+                if contain(features, temp_features):
+                    continue
+                temp_acq_value = self.acq(temp_features)
+                features.append(temp_features)
+                pq.put(elem_class(temp_acq_value, elem.father_id, temp_graph))
+                temp_step_graph_list.append([temp_acq_value, temp_graph])
+                if self._accept_new_acq_value(opt_acq, temp_acq_value):
+                    opt_acq = temp_acq_value
+                    father_id = elem.father_id
+                    target_graph = deepcopy(temp_graph)
             t *= alpha
 
-
+        print("Father_id():{}".format(father_id))
         # Did not found a not duplicated architecture
         if father_id is None:
             return None, None, []
@@ -202,9 +203,9 @@ class NNOptimizer:
         return np.inf
 
     def _accept_new_acq_value(self, opt_acq, temp_acq_value):
-        if temp_acq_value > opt_acq and self.optimizemode is OptimizeMode.Maximize:
+        if temp_acq_value >= opt_acq and self.optimizemode is OptimizeMode.Maximize:
             return True
-        if temp_acq_value < opt_acq and not self.optimizemode is OptimizeMode.Maximize:
+        if temp_acq_value <= opt_acq and self.optimizemode is OptimizeMode.Minimize:
             return True
         return False
 
@@ -243,9 +244,10 @@ class ReverseElem(Elem):
 
 def contain(features, target_features):
     """Check if the target descriptor is in the features."""
-    features_array = np.array(features)
-    if target_features in features_array:
-        return True
+    target_features_array = np.array(target_features)
+    for item in features:
+        if (item == target_features_array).all():
+            return True
     return False
 
 
