@@ -49,8 +49,7 @@ class IncrementalRegressionProcess:
             'feature_fraction': 0.9,
             'bagging_fraction': 0.8,
             'bagging_freq': 5,
-            'verbose': -1,
-            'early_stopping_round': 20
+            'verbose': -1
         }
         self.n_estimators = 100
         self.gbm = None
@@ -161,24 +160,24 @@ class NNOptimizer:
         print("pq.qsize():{}".format(pq.qsize()))
         while not pq.empty() and t > t_min:
             elem = pq.get()
-            # if self.optimizemode is OptimizeMode.Maximize:
-            #     temp_exp = min((elem.metric_value - opt_acq) / t, 1.0)
-            # else:
-            #     temp_exp = min((opt_acq - elem.metric_value) / t, 1.0)
-            # ap = math.exp(temp_exp)
-            # if ap >= random.uniform(0, 1):
-            for temp_graph in transform(elem.graph):
-                temp_features = temp_graph.extract_features()
-                if contain(features, temp_features):
-                    continue
-                temp_acq_value = self.acq(temp_features)
-                features.append(temp_features)
-                pq.put(elem_class(temp_acq_value, elem.father_id, temp_graph))
-                temp_step_graph_list.append([temp_acq_value, temp_graph])
-                if self._accept_new_acq_value(opt_acq, temp_acq_value):
-                    opt_acq = temp_acq_value
-                    father_id = elem.father_id
-                    target_graph = deepcopy(temp_graph)
+            if self.optimizemode is OptimizeMode.Maximize:
+                temp_exp = min((elem.metric_value - opt_acq) / t, 1.0)
+            else:
+                temp_exp = min((opt_acq - elem.metric_value) / t, 1.0)
+            ap = math.exp(temp_exp)
+            if ap >= random.uniform(0, 1):
+                for temp_graph in transform(elem.graph):
+                    temp_features = temp_graph.extract_features()
+                    if contain(features, temp_features):
+                        continue
+                    temp_acq_value = self.acq(temp_features)
+                    features.append(temp_features)
+                    pq.put(elem_class(temp_acq_value, elem.father_id, temp_graph))
+                    temp_step_graph_list.append([temp_acq_value, temp_graph])
+                    if self._accept_new_acq_value(opt_acq, temp_acq_value):
+                        opt_acq = temp_acq_value
+                        father_id = elem.father_id
+                        target_graph = deepcopy(temp_graph)
             t *= alpha
 
         print("Father_id():{}".format(father_id))
