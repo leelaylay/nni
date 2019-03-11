@@ -22,7 +22,7 @@ from abc import abstractmethod
 from collections import Iterable
 
 import torch
-from torch import nn
+import torch.nn as nn
 from torch.nn import functional
 from nni.networkmorphism_tuner.utils import Constant
 
@@ -30,6 +30,7 @@ from nni.networkmorphism_tuner.utils import Constant
 class AvgPool(nn.Module):
     '''AvgPool Module.
     '''
+
     def __init__(self):
         super().__init__()
 
@@ -41,6 +42,7 @@ class AvgPool(nn.Module):
 class GlobalAvgPool1d(AvgPool):
     '''GlobalAvgPool1d Module.
     '''
+
     def forward(self, input_tensor):
         return functional.avg_pool1d(input_tensor, input_tensor.size()[2:]).view(
             input_tensor.size()[:2]
@@ -50,6 +52,7 @@ class GlobalAvgPool1d(AvgPool):
 class GlobalAvgPool2d(AvgPool):
     '''GlobalAvgPool2d Module.
     '''
+
     def forward(self, input_tensor):
         return functional.avg_pool2d(input_tensor, input_tensor.size()[2:]).view(
             input_tensor.size()[:2]
@@ -59,6 +62,7 @@ class GlobalAvgPool2d(AvgPool):
 class GlobalAvgPool3d(AvgPool):
     '''GlobalAvgPool3d Module.
     '''
+
     def forward(self, input_tensor):
         return functional.avg_pool3d(input_tensor, input_tensor.size()[2:]).view(
             input_tensor.size()[:2]
@@ -68,6 +72,7 @@ class GlobalAvgPool3d(AvgPool):
 class StubLayer:
     '''StubLayer Module. Base Module.
     '''
+
     def __init__(self, input_node=None, output_node=None):
         self.input = input_node
         self.output = output_node
@@ -133,9 +138,11 @@ class StubLayer:
 class StubWeightBiasLayer(StubLayer):
     '''StubWeightBiasLayer Module to set the bias.
     '''
+
     def import_weights(self, torch_layer):
         self.set_weights(
-            (torch_layer.weight.data.cpu().numpy(), torch_layer.bias.data.cpu().numpy())
+            (torch_layer.weight.data.cpu().numpy(),
+             torch_layer.bias.data.cpu().numpy())
         )
 
     def import_weights_keras(self, keras_layer):
@@ -152,6 +159,7 @@ class StubWeightBiasLayer(StubLayer):
 class StubBatchNormalization(StubWeightBiasLayer):
     '''StubBatchNormalization Module. Batch Norm.
     '''
+
     def __init__(self, num_features, input_node=None, output_node=None):
         super().__init__(input_node, output_node)
         self.num_features = num_features
@@ -183,6 +191,7 @@ class StubBatchNormalization(StubWeightBiasLayer):
 class StubBatchNormalization1d(StubBatchNormalization):
     '''StubBatchNormalization1d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.BatchNorm1d(self.num_features)
 
@@ -190,6 +199,7 @@ class StubBatchNormalization1d(StubBatchNormalization):
 class StubBatchNormalization2d(StubBatchNormalization):
     '''StubBatchNormalization2d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.BatchNorm2d(self.num_features)
 
@@ -197,6 +207,7 @@ class StubBatchNormalization2d(StubBatchNormalization):
 class StubBatchNormalization3d(StubBatchNormalization):
     '''StubBatchNormalization3d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.BatchNorm3d(self.num_features)
 
@@ -204,6 +215,7 @@ class StubBatchNormalization3d(StubBatchNormalization):
 class StubDense(StubWeightBiasLayer):
     '''StubDense Module. Linear.
     '''
+
     def __init__(self, input_units, units, input_node=None, output_node=None):
         super().__init__(input_node, output_node)
         self.input_units = input_units
@@ -214,7 +226,8 @@ class StubDense(StubWeightBiasLayer):
         return (self.units,)
 
     def import_weights_keras(self, keras_layer):
-        self.set_weights((keras_layer.get_weights()[0].T, keras_layer.get_weights()[1]))
+        self.set_weights((keras_layer.get_weights()[
+                         0].T, keras_layer.get_weights()[1]))
 
     def export_weights_keras(self, keras_layer):
         keras_layer.set_weights((self.weights[0].T, self.weights[1]))
@@ -229,6 +242,7 @@ class StubDense(StubWeightBiasLayer):
 class StubConv(StubWeightBiasLayer):
     '''StubConv Module. Conv.
     '''
+
     def __init__(self, input_channel, filters, kernel_size, stride=1, input_node=None, output_node=None):
         super().__init__(input_node, output_node)
         self.input_channel = input_channel
@@ -248,13 +262,14 @@ class StubConv(StubWeightBiasLayer):
         return tuple(ret)
 
     def import_weights_keras(self, keras_layer):
-        self.set_weights((keras_layer.get_weights()[0].T, keras_layer.get_weights()[1]))
+        self.set_weights((keras_layer.get_weights()[
+                         0].T, keras_layer.get_weights()[1]))
 
     def export_weights_keras(self, keras_layer):
         keras_layer.set_weights((self.weights[0].T, self.weights[1]))
 
     def size(self):
-        return self.filters * self.kernel_size * self.kernel_size + self.filters
+        return (self.input_channel * self.kernel_size * self.kernel_size + 1) * self.filters
 
     @abstractmethod
     def to_real_layer(self):
@@ -280,6 +295,7 @@ class StubConv(StubWeightBiasLayer):
 class StubConv1d(StubConv):
     '''StubConv1d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.Conv1d(
             self.input_channel,
@@ -293,6 +309,7 @@ class StubConv1d(StubConv):
 class StubConv2d(StubConv):
     '''StubConv2d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.Conv2d(
             self.input_channel,
@@ -306,6 +323,7 @@ class StubConv2d(StubConv):
 class StubConv3d(StubConv):
     '''StubConv3d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.Conv3d(
             self.input_channel,
@@ -319,6 +337,7 @@ class StubConv3d(StubConv):
 class StubAggregateLayer(StubLayer):
     '''StubAggregateLayer Module.
     '''
+
     def __init__(self, input_nodes=None, output_node=None):
         if input_nodes is None:
             input_nodes = []
@@ -368,6 +387,7 @@ class StubFlatten(StubLayer):
 class StubReLU(StubLayer):
     '''StubReLU Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.ReLU()
 
@@ -375,6 +395,7 @@ class StubReLU(StubLayer):
 class StubSoftmax(StubLayer):
     '''StubSoftmax Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.LogSoftmax(dim=1)
 
@@ -382,6 +403,7 @@ class StubSoftmax(StubLayer):
 class StubDropout(StubLayer):
     '''StubDropout Module.
     '''
+
     def __init__(self, rate, input_node=None, output_node=None):
         super().__init__(input_node, output_node)
         self.rate = rate
@@ -394,6 +416,7 @@ class StubDropout(StubLayer):
 class StubDropout1d(StubDropout):
     '''StubDropout1d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.Dropout(self.rate)
 
@@ -401,6 +424,7 @@ class StubDropout1d(StubDropout):
 class StubDropout2d(StubDropout):
     '''StubDropout2d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.Dropout2d(self.rate)
 
@@ -408,6 +432,7 @@ class StubDropout2d(StubDropout):
 class StubDropout3d(StubDropout):
     '''StubDropout3d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.Dropout3d(self.rate)
 
@@ -415,6 +440,7 @@ class StubDropout3d(StubDropout):
 class StubInput(StubLayer):
     '''StubInput Module.
     '''
+
     def __init__(self, input_node=None, output_node=None):
         super().__init__(input_node, output_node)
 
@@ -460,6 +486,7 @@ class StubPooling1d(StubPooling):
 class StubPooling2d(StubPooling):
     '''StubPooling2d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.MaxPool2d(self.kernel_size, stride=self.stride)
 
@@ -467,6 +494,7 @@ class StubPooling2d(StubPooling):
 class StubPooling3d(StubPooling):
     '''StubPooling3d Module.
     '''
+
     def to_real_layer(self):
         return torch.nn.MaxPool3d(self.kernel_size, stride=self.stride)
 
@@ -474,6 +502,7 @@ class StubPooling3d(StubPooling):
 class StubGlobalPooling(StubLayer):
     '''StubGlobalPooling Module.
     '''
+
     def __init__(self, input_node=None, output_node=None):
         super().__init__(input_node, output_node)
 
@@ -489,6 +518,7 @@ class StubGlobalPooling(StubLayer):
 class StubGlobalPooling1d(StubGlobalPooling):
     '''StubGlobalPooling1d Module.
     '''
+
     def to_real_layer(self):
         return GlobalAvgPool1d()
 
@@ -496,6 +526,7 @@ class StubGlobalPooling1d(StubGlobalPooling):
 class StubGlobalPooling2d(StubGlobalPooling):
     '''StubGlobalPooling2d Module.
     '''
+
     def to_real_layer(self):
         return GlobalAvgPool2d()
 
@@ -503,6 +534,7 @@ class StubGlobalPooling2d(StubGlobalPooling):
 class StubGlobalPooling3d(StubGlobalPooling):
     '''StubGlobalPooling3d Module.
     '''
+
     def to_real_layer(self):
         return GlobalAvgPool3d()
 
@@ -510,6 +542,7 @@ class StubGlobalPooling3d(StubGlobalPooling):
 class TorchConcatenate(nn.Module):
     '''TorchConcatenate Module.
     '''
+
     def forward(self, input_list):
         return torch.cat(input_list, dim=1)
 
@@ -517,6 +550,7 @@ class TorchConcatenate(nn.Module):
 class TorchAdd(nn.Module):
     '''TorchAdd Module.
     '''
+
     def forward(self, input_list):
         return input_list[0] + input_list[1]
 
@@ -524,8 +558,10 @@ class TorchAdd(nn.Module):
 class TorchFlatten(nn.Module):
     '''TorchFlatten Module.
     '''
+
     def forward(self, input_tensor):
         return input_tensor.view(input_tensor.size(0), -1)
+
 
 def keras_dropout(layer, rate):
     '''keras dropout layer.
@@ -786,3 +822,363 @@ def get_n_dim(layer):
     )):
         return 3
     return -1
+
+
+OPS = {
+    'skip_connect': lambda C, stride, affine: Identity() if stride == 1 else FactorizedReduce(C, C, affine=affine)
+}
+
+
+class StubConv7117(StubLayer):
+    def __init__(self, filters,  stride=1, affine=True, input_node=None, output_node=None):
+        super().__init__(input_node, output_node)
+        self.filters = filters
+        self.stride = stride
+        self.affine = affine
+
+    @property
+    def output_shape(self):
+        ret = list(self.input.shape[:-1])
+        for index, dim in enumerate(ret):
+            ret[index] = (
+                int((dim -1) / self.stride) + 1
+            )
+        ret = ret + [self.filters]
+        return tuple(ret)
+
+    def size(self):
+        # bias=False
+        size_conv1 = self.filters *7 * self.filters
+        size_conv2 = self.filters *7 * self.filters
+        size_bn = self.filters * 4
+        return size_conv1+size_conv2+size_bn
+
+    def __str__(self):
+        return (
+            super().__str__()
+            + "("
+            + ", ".join(
+                str(item)
+                for item in [
+                    self.filters,
+                    self.stride,
+                    self.affine
+                ]
+            )
+            + ")"
+        )
+
+    def to_real_layer(self):
+        return n.Sequential(
+            nn.ReLU(inplace=False),
+            nn.Conv2d(self.filters, self.filters, (1, 7), stride=(1, self.stride),
+                      padding=(0, 3), bias=False),
+            nn.Conv2d(self.filters, self.filters, (7, 1), stride=(self.stride, 1),
+                      padding=(3, 0), bias=False),
+            nn.BatchNorm2d(self.filters, affine=self.affine))
+
+
+class StubReLUConvBN(StubLayer):
+    def __init__(self, input_channel, filters, kernel_size, stride=1, padding=0, affine=True, input_node=None, output_node=None):
+        super().__init__(input_node, output_node)
+        self.input_channel = input_channel
+        self.filters = filters
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.affine = affine
+
+    @property
+    def output_shape(self):
+        ret = list(self.input.shape[:-1])
+        for index, dim in enumerate(ret):
+            ret[index] = (
+                int((dim + 2 * self.padding - self.kernel_size) / self.stride) + 1
+            )
+        ret = ret + [self.filters]
+        return tuple(ret)
+
+    def size(self):
+        # bias=False
+        size_conv = (self.input_channel * self.kernel_size *
+                     self.kernel_size) * self.filters
+        size_bn = self.filters * 4
+        return size_conv+size_bn
+
+    def __str__(self):
+        return (
+            super().__str__()
+            + "("
+            + ", ".join(
+                str(item)
+                for item in [
+                    self.input_channel,
+                    self.filters,
+                    self.kernel_size,
+                    self.stride,
+                    self.padding,
+                    self.affine
+                ]
+            )
+            + ")"
+        )
+
+    def to_real_layer(self):
+        return ReLUConvBN(self.C_in, self.C_out, self.kernel_size, self.stride, self.padding, self.affine)
+
+
+class ReLUConvBN(nn.Module):
+
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
+        super(ReLUConvBN, self).__init__()
+        self.op = nn.Sequential(
+            nn.ReLU(inplace=False),
+            nn.Conv2d(C_in, C_out, kernel_size, stride=stride,
+                      padding=padding, bias=False),
+            nn.BatchNorm2d(C_out, affine=affine)
+        )
+
+    def forward(self, x):
+        return self.op(x)
+
+
+class StubDilConv(StubLayer):
+    def __init__(self, input_channel, filters, kernel_size, stride=1, padding=0, dilation=2, affine=True, input_node=None, output_node=None):
+        super().__init__(input_node, output_node)
+        self.input_channel = input_channel
+        self.filters = filters
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.affine = affine
+
+    @property
+    def output_shape(self):
+        ret = list(self.input.shape[:-1])
+        for index, dim in enumerate(ret):
+            ret[index] = (
+                int((dim + 2 * self.padding - self.dilation *
+                     (self.kernel_size-1)-1) / self.stride) + 1
+            )
+        ret = ret + [self.filters]
+        return tuple(ret)
+
+    def size(self):
+        size_conv1 = self.input_channel * self.kernel_size * self.kernel_size
+        size_conv2 = (self.input_channel) * self.filters
+        size_bn = self.filters * 4
+        return size_conv1+size_conv2+size_bn
+
+    def __str__(self):
+        return (
+            super().__str__()
+            + "("
+            + ", ".join(
+                str(item)
+                for item in [
+                    self.input_channel,
+                    self.filters,
+                    self.kernel_size,
+                    self.stride,
+                    self.padding,
+                    self.dilation,
+                    self.affine
+                ]
+            )
+            + ")"
+        )
+
+    @abstractmethod
+    def to_real_layer(self):
+        pass
+
+
+class StubDilConv33(StubDilConv):
+    def to_real_layer(self):
+        return DilConv(self.C_in, self.C_out, 3, self.stride, 2, 2, self.affine)
+
+
+class StubDilConv55(StubDilConv):
+    def to_real_layer(self):
+        return DilConv(self.C_in, self.C_out, 5, self.stride, 4, 2, self.affine)
+
+
+class DilConv(nn.Module):
+
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, dilation, affine=True):
+        super(DilConv, self).__init__()
+        self.op = nn.Sequential(
+            nn.ReLU(inplace=False),
+            nn.Conv2d(C_in, C_in, kernel_size=kernel_size, stride=stride,
+                      padding=padding, dilation=dilation, groups=C_in, bias=False),
+            nn.Conv2d(C_in, C_out, kernel_size=1, padding=0, bias=False),
+            nn.BatchNorm2d(C_out, affine=affine),
+        )
+
+    def forward(self, x):
+        return self.op(x)
+
+
+class StubMaxPooling33(StubPooling):
+    def to_real_layer(self):
+        return torch.nn.MaxPool2d(3, stride=self.stride, padding=1)
+
+
+class StubAvgPooling33(StubPooling):
+    def to_real_layer(self):
+        return torch.nn.AvgPool2d(3, stride=self.stride, padding=1, count_include_pad=False)
+
+
+class StubSepConv(StubLayer):
+    def __init__(self, input_channel, filters, kernel_size, stride=1, padding=0, affine=True, input_node=None, output_node=None):
+        super().__init__(input_node, output_node)
+        self.input_channel = input_channel
+        self.filters = filters
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.affine = affine
+
+    @property
+    def output_shape(self):
+        ret = list(self.input.shape[:-1])
+        for index, dim in enumerate(ret):
+            ret[index] = (
+                int((dim + 2 * self.padding - self.kernel_size) / self.stride) + 1
+            )
+        ret = ret + [self.filters]
+        return tuple(ret)
+
+    def size(self):
+        # bias = False
+        size_conv1 = self.input_channel * self.kernel_size * self.kernel_size
+        size_conv2 = self.input_channel * self.input_channel
+        size_bn1 = self.input_channel * 4
+        size_conv3 = self.input_channel * self.kernel_size * self.kernel_size
+        size_conv4 = self.input_channel * self.filters
+        size_bn2 = self.filters * 4
+        return size_conv1+size_conv2+size_bn1+size_conv3+size_conv4+size_bn2
+
+    def __str__(self):
+        return (
+            super().__str__()
+            + "("
+            + ", ".join(
+                str(item)
+                for item in [
+                    self.input_channel,
+                    self.filters,
+                    self.kernel_size,
+                    self.stride,
+                    self.padding,
+                    self.affine
+                ]
+            )
+            + ")"
+        )
+
+    @abstractmethod
+    def to_real_layer(self):
+        pass
+
+
+class StubSepConv33(StubSepConv):
+    def to_real_layer(self):
+        return SepConv(self.input_channel, self.filters, 3, self.stride, 1, affine=self.affine)
+
+
+class StubSepConv55(StubSepConv):
+    def to_real_layer(self):
+        return SepConv(self.input_channel, self.filters, 5, self.stride, 2, affine=self.affine)
+
+
+class StubSepConv77(StubSepConv):
+    def to_real_layer(self):
+        return SepConv(self.input_channel, self.filters, 7, self.stride, 3, affine=self.affine)
+
+
+class SepConv(nn.Module):
+
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
+        super(SepConv, self).__init__()
+        self.op = nn.Sequential(
+            nn.ReLU(inplace=False),
+            nn.Conv2d(C_in, C_in, kernel_size=kernel_size, stride=stride,
+                      padding=padding, groups=C_in, bias=False),
+            nn.Conv2d(C_in, C_in, kernel_size=1, padding=0, bias=False),
+            nn.BatchNorm2d(C_in, affine=affine),
+            nn.ReLU(inplace=False),
+            nn.Conv2d(C_in, C_in, kernel_size=kernel_size, stride=1,
+                      padding=padding, groups=C_in, bias=False),
+            nn.Conv2d(C_in, C_out, kernel_size=1, padding=0, bias=False),
+            nn.BatchNorm2d(C_out, affine=affine),
+        )
+
+    def forward(self, x):
+        return self.op(x)
+
+
+class StubIdentity(StubLayer):
+    def __init__(self, input_node=None, output_node=None):
+        super().__init__(input_node, output_node)
+
+    @property
+    def output_shape(self):
+        return self.input[0].shape
+
+    def to_real_layer(self):
+        return Identity()
+
+
+class Identity(nn.Module):
+
+    def __init__(self):
+        super(Identity, self).__init__()
+
+    def forward(self, x):
+        return x
+
+
+class StubZero(StubLayer):
+    def __init__(self, stride, input_node=None, output_node=None):
+        super().__init__(input_node, output_node)
+        self.stride = stride
+
+    @property
+    def output_shape(self):
+        return self.input[0].shape
+
+    def to_real_layer(self):
+        return Zero(self.stride)
+
+
+class Zero(nn.Module):
+
+    def __init__(self, stride):
+        super(Zero, self).__init__()
+        self.stride = stride
+
+    def forward(self, x):
+        if self.stride == 1:
+            return x.mul(0.)
+        return x[:, :, ::self.stride, ::self.stride].mul(0.)
+
+
+class FactorizedReduce(nn.Module):
+
+    def __init__(self, C_in, C_out, affine=True):
+        super(FactorizedReduce, self).__init__()
+        assert C_out % 2 == 0
+        self.relu = nn.ReLU(inplace=False)
+        self.conv_1 = nn.Conv2d(C_in, C_out // 2, 1,
+                                stride=2, padding=0, bias=False)
+        self.conv_2 = nn.Conv2d(C_in, C_out // 2, 1,
+                                stride=2, padding=0, bias=False)
+        self.bn = nn.BatchNorm2d(C_out, affine=affine)
+
+    def forward(self, x):
+        x = self.relu(x)
+        out = torch.cat([self.conv_1(x), self.conv_2(x[:, :, 1:, 1:])], dim=1)
+        out = self.bn(out)
+        return out

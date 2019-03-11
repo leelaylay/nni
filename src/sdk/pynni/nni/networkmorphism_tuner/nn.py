@@ -107,11 +107,9 @@ class CnnGenerator(NetworkGenerator):
             self.dropout(Constant.CONV_DROPOUT_RATE), output_node_id
         )
         output_node_id = graph.add_layer(
-            StubDense(graph.node_list[output_node_id].shape[0], model_width),
+            StubDense(graph.node_list[output_node_id].shape[0], self.n_output_node),
             output_node_id,
         )
-        output_node_id = graph.add_layer(StubReLU(), output_node_id)
-        graph.add_layer(StubDense(model_width, self.n_output_node), output_node_id)
         return graph
 
 
