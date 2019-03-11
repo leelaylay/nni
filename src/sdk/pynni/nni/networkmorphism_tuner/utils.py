@@ -36,7 +36,6 @@ class Constant:
     N_NEIGHBOURS = 8
     MAX_MODEL_SIZE = 1 << 24
     KERNEL_LAMBDA = 1.0
-    BETA = 2.576
     MLP_MODEL_LEN = 3
     MLP_MODEL_WIDTH = 5
     MODEL_LEN = 3
@@ -47,4 +46,4 @@ class Constant:
     MLP_DROPOUT_RATE = 0.25
     CONV_BLOCK_DISTANCE = 2
     BATCH_SIZE = 128
-    T_MIN = 0.0001
+    T_MIN = 0.001
