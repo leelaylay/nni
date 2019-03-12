@@ -106,7 +106,7 @@ def to_deeper_graph(graph):
     ''' deeper graph
     '''
     # we only deep the conv block here
-    weighted_layer_ids = graph.deep_conv_layer_ids()
+    weighted_layer_ids = graph.deep_layer_ids()
     if len(weighted_layer_ids) >= Constant.MAX_LAYERS:
         return None
 
