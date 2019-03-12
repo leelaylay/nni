@@ -641,16 +641,16 @@ def is_layer(layer, layer_type):
         return isinstance(layer, (StubFlatten, ))
     elif layer_type == "GlobalAveragePooling":
         return isinstance(layer, StubGlobalPooling)
-    elif layer_type == "StubReLUConvBN":
+    elif layer_type == "ReLUConvBN":
         return isinstance(layer, StubReLUConvBN)
-    elif layer_type == "StubConv7117":
+    elif layer_type == "Conv7117":
         return isinstance(layer, StubConv7117)
-    elif layer_type == "StubDilConv":
-        return isinstance(layer, StubDilConv)
-    elif layer_type == "StubSepConv":
-        return isinstance(layer, StubSepConv)
+    elif layer_type == "DilConv":
+        return isinstance(layer, (StubDilConv,))
+    elif layer_type == "SepConv":
+        return isinstance(layer, (StubSepConv,))
     else:
-        raise TypeError("The layer has not been supported yet.")
+        raise TypeError("The layer {} has not been supported yet.".format(layer_type))
 
 
 def layer_description_extractor(layer, node_to_id):
@@ -785,13 +785,13 @@ def layer_width(layer):
         return layer.units
     if is_layer(layer, "Conv"):
         return layer.filters
-    if is_layer(layer, "StubReLUConvBN"):
+    if is_layer(layer, "ReLUConvBN"):
         return layer.filters
-    if is_layer(layer, "StubConv7117"):
+    if is_layer(layer, "Conv7117"):
         return layer.filters
-    if is_layer(layer, "StubDilConv"):
+    if is_layer(layer, "DilConv"):
         return layer.filters
-    if is_layer(layer, "StubSepConv"):
+    if is_layer(layer, "SepConv"):
         return layer.filters
     raise TypeError("The layer should be either Dense or Conv layer.")
 

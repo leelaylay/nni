@@ -32,9 +32,9 @@ class OptimizeMode(Enum):
 class Constant:
     '''Constant for the Tuner.
     '''
-    MAX_LAYERS = 100
+    MAX_LAYERS = 200
     N_NEIGHBOURS = 8
-    MAX_MODEL_SIZE = 1 << 26
+    MAX_MODEL_SIZE = 1 << 25
     KERNEL_LAMBDA = 1.0
     MLP_MODEL_LEN = 3
     MLP_MODEL_WIDTH = 5

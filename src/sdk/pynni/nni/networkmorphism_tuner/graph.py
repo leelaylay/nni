@@ -581,7 +581,7 @@ class Graph:
         topo_node_list = self.topological_order
         graph_features = np.zeros(fix_len)
 
-        model_size = 0
+        model_size = self.size()
         model_layer_number = len(topo_node_list)
         count_conv = 0
         count_dense = 0
@@ -608,14 +608,48 @@ class Graph:
 
                 layer = self.layer_list[layer_idx]
 
+                if is_layer(layer, "ReLUConvBN"):
+                    count_conv += 1
+                    count_batchnorm += 1
+                    count_relu += 1
+                    unit = layer.filters
+                    unit_max_conv = max(unit_max_conv, unit)
+                    unit_min_conv = min(unit_min_conv, unit)
+                    unit_mean_conv += unit
+                
+                elif is_layer(layer, "Conv7117"):
+                    count_conv += 2
+                    count_relu += 1
+                    unit = layer.filters
+                    unit_max_conv = max(unit_max_conv, unit)
+                    unit_min_conv = min(unit_min_conv, unit)
+                    unit_mean_conv = unit_mean_conv + 2*unit
+                
+                elif is_layer(layer, "DilConv"):
+                    count_conv += 2
+                    count_batchnorm += 1
+                    count_relu += 1
+                    unit = layer.filters
+                    unit_max_conv = max(unit_max_conv, unit)
+                    unit_min_conv = min(unit_min_conv, unit)
+                    unit_mean_conv = unit_mean_conv +unit+layer.input_channel
 
-                if is_layer(layer, "Conv"):
+                elif is_layer(layer, "SepConv"):
+                    count_conv += 4
+                    count_batchnorm += 2
+                    count_relu += 2
+                    unit = layer.filters
+                    unit_max_conv = max(unit_max_conv, unit)
+                    unit_min_conv = min(unit_min_conv, unit)
+                    unit_mean_conv = unit_mean_conv + unit+layer.input_channel*3
+                    
+
+                elif is_layer(layer, "Conv"):
                     count_conv += 1
                     unit = layer.filters
                     unit_max_conv = max(unit_max_conv, unit)
                     unit_min_conv = min(unit_min_conv, unit)
                     unit_mean_conv += unit
-                    model_size += (layer.input_channel*layer.kernel_size*layer.kernel_size+1)*layer.filters
 
                 elif is_layer(layer, "Dense"):
                     count_dense += 1
@@ -623,11 +657,9 @@ class Graph:
                     unit_max_dense = max(unit_max_dense, unit)
                     unit_min_dense = min(unit_min_dense, unit)
                     unit_mean_dense += unit
-                    model_size += (layer.input_units+1)*layer.units
 
                 elif is_layer(layer, "BatchNormalization"):
                     count_batchnorm += 1
-                    model_size += layer.num_features*4
 
                 elif is_layer(layer, "Concatenate"):
                     count_concat += 1
@@ -811,6 +843,19 @@ class Graph:
             if is_layer(layer, "GlobalAveragePooling"):
                 break
             if is_layer(layer, "Add") or is_layer(layer, "Concatenate"):
+                continue
+            ret.append(layer_id)
+        return ret
+
+    def deep_conv_layer_ids(self):
+        ret = []
+        for layer_id in self.get_main_chain_layers():
+            layer = self.layer_list[layer_id]
+            if is_layer(layer, "GlobalAveragePooling"):
+                break
+            if is_layer(layer, "Add") or is_layer(layer, "Concatenate"):
+                continue
+            if is_layer(layer, "Dense"):
                 continue
             ret.append(layer_id)
         return ret

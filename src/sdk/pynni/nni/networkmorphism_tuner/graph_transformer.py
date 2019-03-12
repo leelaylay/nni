@@ -19,19 +19,14 @@
 # ==================================================================================================
 
 from copy import deepcopy
-
 from random import randrange, sample
 
 from nni.networkmorphism_tuner.graph import NetworkDescriptor
 from nni.networkmorphism_tuner.layers import (
-    StubDense,
-    StubReLU,
-    get_batch_norm_class,
-    get_conv_class,
-    get_dropout_class,
-    get_pooling_class,
-    is_layer,
-)
+    StubAvgPooling33, StubConv7117, StubDense, StubDilConv33, StubDilConv55,
+    StubMaxPooling33, StubReLU, StubSepConv33, StubSepConv55, StubSepConv77,
+    get_batch_norm_class, get_conv_class, get_dropout_class, get_pooling_class,
+    is_layer)
 from nni.networkmorphism_tuner.utils import Constant
 
 
@@ -40,8 +35,8 @@ def to_wider_graph(graph):
     '''
     weighted_layer_ids = graph.wide_layer_ids()
     weighted_layer_ids = list(
-        filter(lambda x: graph.layer_list[x].output.shape[-1], weighted_layer_ids)
-    )
+        filter(lambda x: graph.layer_list[x].output.shape[-1],
+               weighted_layer_ids))
     wider_layers = sample(weighted_layer_ids, 1)
 
     for layer_id in wider_layers:
@@ -61,9 +56,10 @@ def to_skip_connection_graph(graph):
     # The last conv layer cannot be widen since wider operator cannot be done over the two sides of flatten.
     weighted_layer_ids = graph.skip_connection_layer_ids()
     valid_connection = []
-    for skip_type in sorted([NetworkDescriptor.ADD_CONNECT, NetworkDescriptor.CONCAT_CONNECT]):
+    for skip_type in sorted(
+        [NetworkDescriptor.ADD_CONNECT, NetworkDescriptor.CONCAT_CONNECT]):
         for index_a in range(len(weighted_layer_ids)):
-            for index_b in range(len(weighted_layer_ids))[index_a + 1 :]:
+            for index_b in range(len(weighted_layer_ids))[index_a + 1:]:
                 valid_connection.append((index_a, index_b, skip_type))
 
     if not valid_connection:
@@ -83,43 +79,25 @@ def create_new_layer(layer, n_dim):
     '''
 
     input_shape = layer.output.shape
-    dense_deeper_classes = [StubDense, get_dropout_class(n_dim), StubReLU]
-    conv_deeper_classes = [get_conv_class(n_dim), get_batch_norm_class(n_dim), StubReLU]
-    if is_layer(layer, "ReLU"):
-        conv_deeper_classes = [get_conv_class(n_dim), get_batch_norm_class(n_dim)]
-        dense_deeper_classes = [StubDense, get_dropout_class(n_dim)]
-    elif is_layer(layer, "Dropout"):
-        dense_deeper_classes = [StubDense, StubReLU]
-    elif is_layer(layer, "BatchNormalization"):
-        conv_deeper_classes = [get_conv_class(n_dim), StubReLU]
+    conv_deeper_classes = [StubConv7117, StubDilConv33, StubDilConv55, StubMaxPooling33, StubAvgPooling33, StubSepConv33, StubSepConv55, StubSepConv77]
 
-    layer_class = None
-    if len(input_shape) == 1:
-        # It is in the dense layer part.
-        layer_class = sample(dense_deeper_classes, 1)[0]
-    else:
-        # It is in the conv layer part.
-        layer_class = sample(conv_deeper_classes, 1)[0]
+    # It is in the conv layer part.
+    layer_class = sample(conv_deeper_classes, 1)[0]
 
-    if layer_class == StubDense:
-        new_layer = StubDense(input_shape[0], input_shape[0])
-
-    elif layer_class == get_dropout_class(n_dim):
-        new_layer = layer_class(Constant.DENSE_DROPOUT_RATE)
-
-    elif layer_class == get_conv_class(n_dim):
-        new_layer = layer_class(
-            input_shape[-1], input_shape[-1], sample((1, 3, 5), 1)[0], stride=1
-        )
-
-    elif layer_class == get_batch_norm_class(n_dim):
+    if layer_class is StubAvgPooling33 or layer_class is StubMaxPooling33:
+        new_layer = layer_class(kernel_size=3, stride=1, padding=1)
+    elif layer_class is StubConv7117:
         new_layer = layer_class(input_shape[-1])
-
-    elif layer_class == get_pooling_class(n_dim):
-        new_layer = layer_class(sample((1, 3, 5), 1)[0])
-
-    else:
-        new_layer = layer_class()
+    elif layer_class is StubDilConv33:
+        new_layer = layer_class(input_shape[-1], input_shape[-1], 3, 1, 2, 2)
+    elif layer_class is StubDilConv55:
+        new_layer = layer_class(input_shape[-1], input_shape[-1], 5, 1, 4, 2)
+    elif layer_class is StubSepConv33:
+        new_layer = layer_class(input_shape[-1], input_shape[-1], 3, 1, 1)
+    elif layer_class is StubSepConv55:
+        new_layer = layer_class(input_shape[-1], input_shape[-1], 5, 1, 2)
+    elif layer_class is StubSepConv77:
+        new_layer = layer_class(input_shape[-1], input_shape[-1], 7, 1, 3)
 
     return new_layer
 
@@ -127,8 +105,8 @@ def create_new_layer(layer, n_dim):
 def to_deeper_graph(graph):
     ''' deeper graph
     '''
-
-    weighted_layer_ids = graph.deep_layer_ids()
+    # we only deep the conv block here
+    weighted_layer_ids = graph.deep_conv_layer_ids()
     if len(weighted_layer_ids) >= Constant.MAX_LAYERS:
         return None
 
@@ -158,16 +136,15 @@ def transform(graph):
 
     graphs = []
     for _ in range(Constant.N_NEIGHBOURS * 2):
-        random_num = randrange(3)
+        random_num = randrange(2)
         temp_graph = None
         if random_num == 0:
             temp_graph = to_deeper_graph(deepcopy(graph))
         elif random_num == 1:
-            temp_graph = to_wider_graph(deepcopy(graph))
-        elif random_num == 2:
             temp_graph = to_skip_connection_graph(deepcopy(graph))
 
-        if temp_graph is not None and temp_graph.size() <= Constant.MAX_MODEL_SIZE:
+        if temp_graph is not None and temp_graph.size(
+        ) <= Constant.MAX_MODEL_SIZE:
             graphs.append(temp_graph)
 
         if len(graphs) >= Constant.N_NEIGHBOURS:

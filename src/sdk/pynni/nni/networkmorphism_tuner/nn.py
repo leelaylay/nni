@@ -21,12 +21,10 @@
 from abc import abstractmethod
 
 from nni.networkmorphism_tuner.graph import Graph
-from nni.networkmorphism_tuner.layers import (StubDense, StubDropout1d,
-                                              StubReLU, get_batch_norm_class,
-                                              get_conv_class,
-                                              get_dropout_class,
-                                              get_global_avg_pooling_class,
-                                              get_pooling_class)
+from nni.networkmorphism_tuner.layers import (
+    StubDense, StubDropout1d, StubReLUConvBN, StubReLU, get_batch_norm_class,
+    get_conv_class, get_dropout_class, get_global_avg_pooling_class,
+    get_pooling_class)
 from nni.networkmorphism_tuner.utils import Constant
 
 
@@ -88,26 +86,22 @@ class CnnGenerator(NetworkGenerator):
         graph = Graph(self.input_shape, False)
         temp_input_channel = self.input_shape[-1]
         output_node_id = 0
-        stride = 1
         for i in range(model_len):
-            output_node_id = graph.add_layer(StubReLU(), output_node_id)
             output_node_id = graph.add_layer(
-                self.batch_norm(graph.node_list[output_node_id].shape[-1]), output_node_id
-            )
-            output_node_id = graph.add_layer(
-                self.conv(temp_input_channel, model_width, kernel_size=3, stride=stride),
+                StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
                 output_node_id,
             )
             temp_input_channel = model_width
             if pooling_len == 0 or ((i + 1) % pooling_len == 0 and i != model_len - 1):
                 output_node_id = graph.add_layer(self.pooling(), output_node_id)
 
-        output_node_id = graph.add_layer(self.global_avg_pooling(), output_node_id)
+        output_node_id = graph.add_layer(self.global_avg_pooling(),
+                                         output_node_id)
         output_node_id = graph.add_layer(
-            self.dropout(Constant.CONV_DROPOUT_RATE), output_node_id
-        )
+            self.dropout(Constant.CONV_DROPOUT_RATE), output_node_id)
         output_node_id = graph.add_layer(
-            StubDense(graph.node_list[output_node_id].shape[0], self.n_output_node),
+            StubDense(graph.node_list[output_node_id].shape[0],
+                      self.n_output_node),
             output_node_id,
         )
         return graph
@@ -143,7 +137,8 @@ class MlpGenerator(NetworkGenerator):
         if model_width is None:
             model_width = Constant.MODEL_WIDTH
         if isinstance(model_width, list) and not len(model_width) == model_len:
-            raise ValueError("The length of 'model_width' does not match 'model_len'")
+            raise ValueError(
+                "The length of 'model_width' does not match 'model_len'")
         elif isinstance(model_width, int):
             model_width = [model_width] * model_len
 
@@ -152,13 +147,12 @@ class MlpGenerator(NetworkGenerator):
         n_nodes_prev_layer = self.input_shape[0]
         for width in model_width:
             output_node_id = graph.add_layer(
-                StubDense(n_nodes_prev_layer, width), output_node_id
-            )
+                StubDense(n_nodes_prev_layer, width), output_node_id)
             output_node_id = graph.add_layer(
-                StubDropout1d(Constant.MLP_DROPOUT_RATE), output_node_id
-            )
+                StubDropout1d(Constant.MLP_DROPOUT_RATE), output_node_id)
             output_node_id = graph.add_layer(StubReLU(), output_node_id)
             n_nodes_prev_layer = width
 
-        graph.add_layer(StubDense(n_nodes_prev_layer, self.n_output_node), output_node_id)
+        graph.add_layer(
+            StubDense(n_nodes_prev_layer, self.n_output_node), output_node_id)
         return graph
