@@ -739,7 +739,7 @@ def layer_description_builder(layer_information, id_to_node):
         dilation = layer_information[8]
         affine = layer_information[9]
         return eval(layer_type)(input_channel, filters, kernel_size, stride,
-                                padding, dilation , affine , layer_input,
+                                padding, dilation, affine, layer_input,
                                 layer_output)
     elif layer_type.startswith("StubSepConv"):
         input_channel = layer_information[3]
@@ -747,8 +747,9 @@ def layer_description_builder(layer_information, id_to_node):
         kernel_size = layer_information[5]
         stride = layer_information[6]
         padding = layer_information[7]
+        affine = layer_information[8]
         return eval(layer_type)(input_channel, filters, kernel_size, stride,
-                                padding, layer_input, layer_output)
+                                padding, affine, layer_input, layer_output)
     elif layer_type.startswith("StubConv"):
         input_channel = layer_information[3]
         filters = layer_information[4]

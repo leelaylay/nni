@@ -844,21 +844,11 @@ class Graph:
                 break
             if is_layer(layer, "Add") or is_layer(layer, "Concatenate"):
                 continue
-            ret.append(layer_id)
-        return ret
-
-    def deep_conv_layer_ids(self):
-        ret = []
-        for layer_id in self.get_main_chain_layers():
-            layer = self.layer_list[layer_id]
-            if is_layer(layer, "GlobalAveragePooling"):
-                break
-            if is_layer(layer, "Add") or is_layer(layer, "Concatenate"):
-                continue
             if is_layer(layer, "Dense"):
                 continue
             ret.append(layer_id)
         return ret
+
 
     def wide_layer_ids(self):
         return (
@@ -867,6 +857,8 @@ class Graph:
 
     def skip_connection_layer_ids(self):
         return self.deep_layer_ids()[:-1]
+    
+
 
     def size(self):
         return sum(list(map(lambda x: x.size(), self.layer_list)))
@@ -1116,6 +1108,7 @@ def json_to_graph(json_model: str):
         node_to_id[new_node] = node_id
         id_to_node[node_id] = new_node
 
+    # layer in the operation_history memory may be different from layer_list
     for item in json_model["operation_history"]:
         if item[0] == "to_deeper_model":
             operation_history.append(
