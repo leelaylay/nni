@@ -33,17 +33,17 @@ class Constant:
     '''Constant for the Tuner.
     '''
     MAX_LAYERS = 1000
-    N_NEIGHBOURS = 8
-    MAX_MODEL_SIZE = 1 << 25
+    N_NEIGHBOURS = 16
+    MAX_MODEL_SIZE = 1 << 26
     KERNEL_LAMBDA = 1.0
     MLP_MODEL_LEN = 3
     MLP_MODEL_WIDTH = 5
     MODEL_LEN = 3
-    MODEL_WIDTH = 64
+    MODEL_WIDTH = 256
     POOLING_KERNEL_SIZE = 2
     DENSE_DROPOUT_RATE = 0.5
     CONV_DROPOUT_RATE = 0.25
     MLP_DROPOUT_RATE = 0.25
     CONV_BLOCK_DISTANCE = 2
     BATCH_SIZE = 128
-    T_MIN = 0.001
+    T_MIN = 0.0001
