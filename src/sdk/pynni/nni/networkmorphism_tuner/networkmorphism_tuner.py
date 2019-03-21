@@ -29,6 +29,7 @@ from nni.networkmorphism_tuner.nn import CnnGenerator, MlpGenerator
 from nni.networkmorphism_tuner.utils import Constant, OptimizeMode
 
 from nni.networkmorphism_tuner.graph import graph_to_json, json_to_graph
+from nni.networkmorphism_tuner.graph_transformer import transform
 
 logger = logging.getLogger("NetworkMorphism_AutoML")
 
@@ -204,10 +205,12 @@ class NetworkMorphismTuner(Tuner):
 
         if new_father_id is None:
             new_father_id = 0
-            generated_graph = self.generators[0](
+            init_graph = self.generators[0](
                 self.n_classes, self.input_shape).generate(
-                    self.default_model_len, self.default_model_width)
+                    self.default_model_len, self.default_model_width)        
             guess_metric = 0.0
+            candidate_graphs = transform(init_graph)
+            generated_graph = random.choice(candidate_graphs)
 
         return new_father_id, generated_graph, guess_metric
 

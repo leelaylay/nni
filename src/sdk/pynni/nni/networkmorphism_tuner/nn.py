@@ -21,10 +21,14 @@
 from abc import abstractmethod
 
 from nni.networkmorphism_tuner.graph import Graph
-from nni.networkmorphism_tuner.layers import (
-    StubDense, StubDropout1d, StubReLUConvBN, StubReLU, get_batch_norm_class,
-    get_conv_class, get_dropout_class, get_global_avg_pooling_class,
-    get_pooling_class)
+from nni.networkmorphism_tuner.layers import (StubDense, StubDropout1d,
+                                              StubFactorizedReduce, StubReLU,
+                                              StubReLUConvBN,
+                                              get_batch_norm_class,
+                                              get_conv_class,
+                                              get_dropout_class,
+                                              get_global_avg_pooling_class,
+                                              get_pooling_class)
 from nni.networkmorphism_tuner.utils import Constant
 
 
@@ -82,19 +86,52 @@ class CnnGenerator(NetworkGenerator):
             model_len = Constant.MODEL_LEN
         if model_width is None:
             model_width = Constant.MODEL_WIDTH
-        pooling_len = int(model_len / 4)
         graph = Graph(self.input_shape, False)
         temp_input_channel = self.input_shape[-1]
         output_node_id = 0
-        for i in range(model_len):
-            output_node_id = graph.add_layer(
-                StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
-                output_node_id,
-            )
-            temp_input_channel = model_width
-            if pooling_len == 0 or ((i + 1) % pooling_len == 0 and i != model_len - 1):
-                output_node_id = graph.add_layer(self.pooling(), output_node_id)
 
+        # steam block
+        current_channel = model_width * 3
+        output_node_id = graph.add_layer(
+            self.conv(temp_input_channel, current_channel, kernel_size=3, stride=1),
+            output_node_id
+        )
+        output_node_id = graph.add_layer(
+            self.batch_norm(current_channel),
+            output_node_id
+        )
+
+        temp_input_channel = current_channel
+        reduction_prev = False
+        # search space block
+        for i in range(model_len):
+            if reduction_prev:
+                output_node_id_0 = graph.add_layer(
+                    StubFactorizedReduce(temp_input_channel, model_width),
+                    output_node_id,
+                )
+                output_node_id_1 = graph.add_layer(
+                    StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
+                    output_node_id,
+                )
+            else:
+                output_node_id_0 = graph.add_layer(
+                    StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
+                    output_node_id,
+                )
+                output_node_id_1 = graph.add_layer(
+                    StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
+                    output_node_id,
+                )
+
+            temp_input_channel = model_width
+            if i in [model_len // 3, 2 * model_len // 3]:
+                output_node_id = graph.add_layer(self.pooling(), output_node_id)
+                reduction_prev = True
+            else:
+                reduction_prev = False
+
+        # classifier block
         output_node_id = graph.add_layer(self.global_avg_pooling(),
                                          output_node_id)
         output_node_id = graph.add_layer(

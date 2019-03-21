@@ -649,6 +649,8 @@ def is_layer(layer, layer_type):
         return isinstance(layer, (StubDilConv,))
     elif layer_type == "SepConv":
         return isinstance(layer, (StubSepConv,))
+    elif layer_type == "StubFactorizedReduce":
+        return isinstance(layer, (StubFactorizedReduce,))
     else:
         raise TypeError("The layer {} has not been supported yet.".format(layer_type))
 
@@ -667,7 +669,9 @@ def layer_description_extractor(layer, node_to_id):
 
     if layer_output is not None:
         layer_output = node_to_id[layer_output]
-
+    if isinstance(layer, StubFactorizedReduce):
+        return (type(layer).__name__, layer_input, layer_output,
+                layer.input_channel, layer.filters, layer.affine)
     if isinstance(layer, StubReLUConvBN):
         return (type(layer).__name__, layer_input, layer_output,
                 layer.input_channel, layer.filters, layer.kernel_size,
@@ -715,7 +719,12 @@ def layer_description_builder(layer_information, id_to_node):
         layer_input = id_to_node[layer_input_ids]
     layer_output = id_to_node[layer_information[2]]
 
-    if layer_type == "StubReLUConvBN":
+    if layer_type == "StubFactorizedReduce":
+        input_channel = layer_information[3]
+        filters = layer_information[4]
+        affine = layer_information[5]
+        return eval(layer_type)(input_channel, filters, affine, layer_input, layer_output)
+    elif layer_type == "StubReLUConvBN":
         input_channel = layer_information[3]
         filters = layer_information[4]
         kernel_size = layer_information[5]
@@ -1247,6 +1256,53 @@ class Zero(nn.Module):
             return x.mul(0.)
         return x[:, :, ::self.stride, ::self.stride].mul(0.)
 
+
+class Zero(nn.Module):
+    def __init__(self, stride):
+        super(Zero, self).__init__()
+        self.stride = stride
+
+    def forward(self, x):
+        if self.stride == 1:
+            return x.mul(0.)
+        return x[:, :, ::self.stride, ::self.stride].mul(0.)
+
+
+class StubFactorizedReduce(StubLayer):
+    def __init__(self,
+                 input_channel,
+                 filters,
+                 affine=True,
+                 input_node=None,
+                 output_node=None):
+        super().__init__(input_node, output_node)
+        self.input_channel = input_channel
+        self.filters = filters
+        self.affine = affine
+
+    @property
+    def output_shape(self):
+        ret = list(self.input.shape[:-1])
+        for index, dim in enumerate(ret):
+            ret[index] = (int(
+                (dim - 1) / 2) + 1)
+        ret = ret + [self.filters]
+        return tuple(ret)
+
+    def size(self):
+        # bias = False
+        size_conv = self.input_channel * self.filters
+        size_bn1 = self.filters * 4
+        return size_conv + size_bn1
+
+    def __str__(self):
+        return (super().__str__() + "(" + ", ".join(
+            str(item) for item in [
+                self.input_channel, self.filters, self.affine
+            ]) + ")")
+
+    def to_real_layer(self):
+        return FactorizedReduce(self.input_channel, self.filters, self.affine)
 
 class FactorizedReduce(nn.Module):
     def __init__(self, C_in, C_out, affine=True):
