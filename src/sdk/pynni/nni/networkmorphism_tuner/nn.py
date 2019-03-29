@@ -18,17 +18,19 @@
 # OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ==================================================================================================
 
+import random
 from abc import abstractmethod
 
 from nni.networkmorphism_tuner.graph import Graph
-from nni.networkmorphism_tuner.layers import (StubDense, StubDropout1d,
-                                              StubFactorizedReduce, StubReLU,
+from nni.networkmorphism_tuner.layers import (StubAvgPooling33, StubDense,
+                                              StubDropout1d,
+                                              StubFactorizedReduce,
+                                              StubMaxPooling33, StubReLU,
                                               StubReLUConvBN,
                                               get_batch_norm_class,
                                               get_conv_class,
                                               get_dropout_class,
-                                              get_global_avg_pooling_class,
-                                              get_pooling_class)
+                                              get_global_avg_pooling_class)
 from nni.networkmorphism_tuner.utils import Constant
 
 
@@ -46,6 +48,8 @@ class NetworkGenerator:
 
     @abstractmethod
     def generate(self, model_len, model_width):
+        ''' abstractmethod to generate initial networks
+        '''
         pass
 
 
@@ -67,11 +71,11 @@ class CnnGenerator(NetworkGenerator):
             raise ValueError("The input dimension is too high.")
         if len(self.input_shape) < 2:
             raise ValueError("The input dimension is too low.")
+        # fixed layer
         self.conv = get_conv_class(self.n_dim)
         self.dropout = get_dropout_class(self.n_dim)
-        self.global_avg_pooling = get_global_avg_pooling_class(self.n_dim)
-        self.pooling = get_pooling_class(self.n_dim)
         self.batch_norm = get_batch_norm_class(self.n_dim)
+        self.global_avg_pooling = get_global_avg_pooling_class(self.n_dim)
 
     def generate(self, model_len=None, model_width=None):
         """Generates a CNN.
@@ -82,15 +86,13 @@ class CnnGenerator(NetworkGenerator):
             An instance of the class Graph. Represents the neural architecture graph of the generated model.
         """
 
-        if model_len is None:
-            model_len = Constant.MODEL_LEN
-        if model_width is None:
-            model_width = Constant.MODEL_WIDTH
+        model_len = Constant.MODEL_LEN if model_len is None else model_len
+        model_width = Constant.MODEL_WIDTH if model_width is None else model_width
         graph = Graph(self.input_shape, False)
         temp_input_channel = self.input_shape[-1]
         output_node_id = 0
 
-        # steam block
+        # steam block when apply to imagenet, we shall change it.
         current_channel = model_width * 3
         output_node_id = graph.add_layer(
             self.conv(temp_input_channel, current_channel, kernel_size=3, stride=1),
@@ -125,8 +127,10 @@ class CnnGenerator(NetworkGenerator):
                 )
 
             temp_input_channel = model_width
+            output_node_id = [output_node_id_0, output_node_id_1] 
             if i in [model_len // 3, 2 * model_len // 3]:
-                output_node_id = graph.add_layer(self.pooling(), output_node_id)
+                pooling_layer = random.choice([StubMaxPooling33, StubAvgPooling33])
+                output_node_id = graph.add_layer(pooling_layer(kernel_size=3, stride=1, padding=1), output_node_id)
                 reduction_prev = True
             else:
                 reduction_prev = False

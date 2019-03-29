@@ -18,8 +18,9 @@
 # OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ==================================================================================================
 
+
+import random
 from copy import deepcopy
-from random import randrange, sample
 
 from nni.networkmorphism_tuner.graph import NetworkDescriptor
 from nni.networkmorphism_tuner.layers import (
@@ -37,18 +38,32 @@ def to_wider_graph(graph):
     weighted_layer_ids = list(
         filter(lambda x: graph.layer_list[x].output.shape[-1],
                weighted_layer_ids))
-    wider_layers = sample(weighted_layer_ids, 1)
+    wider_layer_id = random.choice(weighted_layer_ids)
 
-    for layer_id in wider_layers:
-        layer = graph.layer_list[layer_id]
-        if is_layer(layer, "Conv"):
-            n_add = layer.filters
-        else:
-            n_add = layer.units
+    layer = graph.layer_list[wider_layer_id]
+    if is_layer(layer, "Conv"):
+        n_add = layer.filters
+    else:
+        n_add = layer.units
 
-        graph.to_wider_model(layer_id, n_add)
+    graph.to_wider_model(wider_layer_id, n_add)
     return graph
 
+def to_deeper_graph(graph):
+    ''' deeper graph
+    '''
+    # we only deep the conv block here
+    weighted_layer_ids = graph.deep_layer_ids()
+    if len(weighted_layer_ids) >= Constant.MAX_LAYERS:
+        return None
+
+    deeper_layer_id = random.choice(weighted_layer_ids)
+
+    layer = graph.layer_list[deeper_layer_id]
+    new_layer = create_new_layer(layer, graph.n_dim)
+    graph.to_deeper_model(deeper_layer_id, new_layer)
+    
+    return graph
 
 def to_skip_connection_graph(graph):
     ''' skip connection graph
@@ -64,13 +79,19 @@ def to_skip_connection_graph(graph):
 
     if not valid_connection:
         return graph
-    for index_a, index_b, skip_type in sample(valid_connection, 1):
-        a_id = weighted_layer_ids[index_a]
-        b_id = weighted_layer_ids[index_b]
-        if skip_type == NetworkDescriptor.ADD_CONNECT:
-            graph.to_add_skip_model(a_id, b_id)
-        else:
-            graph.to_concat_skip_model(a_id, b_id)
+    (index_a, index_b, skip_type) = random.choice(valid_connection)
+    a_id = weighted_layer_ids[index_a]
+    b_id = weighted_layer_ids[index_b]
+    if skip_type == NetworkDescriptor.ADD_CONNECT:
+        graph.to_add_skip_model(a_id, b_id)
+    else:
+        graph.to_concat_skip_model(a_id, b_id)
+    return graph
+
+def to_add_multibranch_graph(graph):
+    ''' skip connection graph
+    '''
+    graph.to_add_multibranch_model(_id)
     return graph
 
 
@@ -82,7 +103,7 @@ def create_new_layer(layer, n_dim):
     conv_deeper_classes = [StubConv7117, StubDilConv33, StubDilConv55, StubMaxPooling33, StubAvgPooling33, StubSepConv33, StubSepConv55, StubSepConv77]
 
     # It is in the conv layer part.
-    layer_class = sample(conv_deeper_classes, 1)[0]
+    layer_class = random.choice(conv_deeper_classes)
 
     if layer_class is StubAvgPooling33 or layer_class is StubMaxPooling33:
         new_layer = layer_class(kernel_size=3, stride=1, padding=1)
@@ -101,24 +122,6 @@ def create_new_layer(layer, n_dim):
 
     return new_layer
 
-
-def to_deeper_graph(graph):
-    ''' deeper graph
-    '''
-    # we only deep the conv block here
-    weighted_layer_ids = graph.deep_layer_ids()
-    if len(weighted_layer_ids) >= Constant.MAX_LAYERS:
-        return None
-
-    deeper_layer_ids = sample(weighted_layer_ids, 1)
-
-    for layer_id in deeper_layer_ids:
-        layer = graph.layer_list[layer_id]
-        new_layer = create_new_layer(layer, graph.n_dim)
-        graph.to_deeper_model(layer_id, new_layer)
-    return graph
-
-
 def legal_graph(graph):
     '''judge if a graph is legal or not.
     '''
@@ -136,12 +139,16 @@ def transform(graph):
 
     graphs = []
     for _ in range(Constant.N_NEIGHBOURS * 2):
-        random_num = randrange(2)
+        random_num = random.randrange(4)
         temp_graph = None
         if random_num == 0:
             temp_graph = to_deeper_graph(deepcopy(graph))
         elif random_num == 1:
             temp_graph = to_skip_connection_graph(deepcopy(graph))
+        elif random_num == 2:
+            temp_graph = to_wider_graph(deepcopy(graph))
+        elif random_num == 3:
+            temp_graph = to_add_multibranch_graph(deepcopy(graph))
 
         if temp_graph is not None and temp_graph.size(
         ) <= Constant.MAX_MODEL_SIZE:

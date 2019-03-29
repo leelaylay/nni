@@ -39,6 +39,18 @@ class NetworkMorphismTestCase(TestCase):
     """  unittest for NetworkMorphismTuner
     """
 
+    def test_graph_generate(self):
+        """ unittest fort graph generate()
+        """
+        graph_init = CnnGenerator(10, (32, 32, 3)).generate()
+        json_out = graph_to_json(graph_init, "temp.json")
+        torch_model = graph_init.produce_torch_model()
+        input_tensor = torch.randn(1, 32, 32, 3)
+        ouput_tensor = torch_model(input_tensor)
+
+        self.assertEqual(ouput_tensor.size(), 10)
+
+
     def test_graph_json_transform(self):
         """ unittest for graph_json_transform function
         """

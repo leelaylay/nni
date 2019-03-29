@@ -32,7 +32,8 @@ class OptimizeMode(Enum):
 class Constant:
     '''Constant for the Tuner.
     '''
-    MAX_LAYERS = 1000
+    MAX_LAYERS = 200
+    MAX_LAYER_WIDTH = 4096
     N_NEIGHBOURS = 16
     MAX_MODEL_SIZE = 1 << 26
     KERNEL_LAMBDA = 1.0
