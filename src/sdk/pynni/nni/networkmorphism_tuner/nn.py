@@ -88,6 +88,7 @@ class CnnGenerator(NetworkGenerator):
 
         model_len = Constant.MODEL_LEN if model_len is None else model_len
         model_width = Constant.MODEL_WIDTH if model_width is None else model_width
+
         graph = Graph(self.input_shape, False)
         temp_input_channel = self.input_shape[-1]
         output_node_id = 0
@@ -95,7 +96,8 @@ class CnnGenerator(NetworkGenerator):
         # steam block when apply to imagenet, we shall change it.
         current_channel = model_width * 3
         output_node_id = graph.add_layer(
-            self.conv(temp_input_channel, current_channel, kernel_size=3, stride=1),
+            self.conv(temp_input_channel, current_channel,
+                      kernel_size=3, stride=1),
             output_node_id
         )
         output_node_id = graph.add_layer(
@@ -113,27 +115,34 @@ class CnnGenerator(NetworkGenerator):
                     output_node_id,
                 )
                 output_node_id_1 = graph.add_layer(
-                    StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
+                    StubReLUConvBN(temp_input_channel, model_width,
+                                   kernel_size=1, stride=1, padding=0),
                     output_node_id,
                 )
             else:
                 output_node_id_0 = graph.add_layer(
-                    StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
+                    StubReLUConvBN(temp_input_channel, model_width,
+                                   kernel_size=1, stride=1, padding=0),
                     output_node_id,
                 )
                 output_node_id_1 = graph.add_layer(
-                    StubReLUConvBN(temp_input_channel, model_width, kernel_size=1, stride=1, padding=0),
+                    StubReLUConvBN(temp_input_channel, model_width,
+                                   kernel_size=1, stride=1, padding=0),
                     output_node_id,
                 )
-
-            temp_input_channel = model_width
-            output_node_id = [output_node_id_0, output_node_id_1] 
+            
+            output_node_id = [output_node_id_0, output_node_id_1]
             if i in [model_len // 3, 2 * model_len // 3]:
-                pooling_layer = random.choice([StubMaxPooling33, StubAvgPooling33])
-                output_node_id = graph.add_layer(pooling_layer(kernel_size=3, stride=1, padding=1), output_node_id)
+                pooling_layer = random.choice(
+                    [StubMaxPooling33, StubAvgPooling33])
+                output_node_id = graph.add_layer(pooling_layer(
+                    kernel_size=3, stride=1, padding=1), output_node_id)
                 reduction_prev = True
+                model_width *= 2
             else:
                 reduction_prev = False
+
+            temp_input_channel = model_width * 2
 
         # classifier block
         output_node_id = graph.add_layer(self.global_avg_pooling(),
@@ -173,10 +182,9 @@ class MlpGenerator(NetworkGenerator):
         Returns:
             An instance of the class Graph. Represents the neural architecture graph of the generated model.
         """
-        if model_len is None:
-            model_len = Constant.MODEL_LEN
-        if model_width is None:
-            model_width = Constant.MODEL_WIDTH
+        model_len = Constant.MODEL_LEN if model_len is None else model_len
+        model_width = Constant.MODEL_WIDTH if model_width is None else model_width
+
         if isinstance(model_width, list) and not len(model_width) == model_len:
             raise ValueError(
                 "The length of 'model_width' does not match 'model_len'")
