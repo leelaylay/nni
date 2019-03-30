@@ -109,6 +109,7 @@ class CnnGenerator(NetworkGenerator):
         reduction_prev = False
         # search space block
         for i in range(model_len):
+            # normal block 
             if reduction_prev:
                 output_node_id_0 = graph.add_layer(
                     StubFactorizedReduce(temp_input_channel, model_width),
@@ -130,8 +131,10 @@ class CnnGenerator(NetworkGenerator):
                                    kernel_size=1, stride=1, padding=0),
                     output_node_id,
                 )
-            
+            # concat two layers
             output_node_id = [output_node_id_0, output_node_id_1]
+
+            # reduction layer using maxpooling or avgpooling
             if i in [model_len // 3, 2 * model_len // 3]:
                 pooling_layer = random.choice(
                     [StubMaxPooling33, StubAvgPooling33])
