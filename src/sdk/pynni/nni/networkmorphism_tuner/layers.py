@@ -24,6 +24,7 @@ from collections import Iterable
 import torch
 import torch.nn as nn
 from torch.nn import functional
+
 from nni.networkmorphism_tuner.utils import Constant
 
 

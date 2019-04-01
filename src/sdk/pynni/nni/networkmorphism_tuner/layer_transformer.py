@@ -20,13 +20,9 @@
 
 import numpy as np
 
-from nni.networkmorphism_tuner.layers import (
-    StubDense,
-    StubReLU,
-    get_batch_norm_class,
-    get_conv_class,
-    get_n_dim,
-)
+from nni.networkmorphism_tuner.layers import (StubDense, StubReLU,
+                                              get_batch_norm_class,
+                                              get_conv_class, get_n_dim)
 
 NOISE_RATIO = 1e-4
 

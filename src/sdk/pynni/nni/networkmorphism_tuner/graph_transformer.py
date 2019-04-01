@@ -23,11 +23,15 @@ import random
 from copy import deepcopy
 
 from nni.networkmorphism_tuner.graph import NetworkDescriptor
-from nni.networkmorphism_tuner.layers import (
-    StubAvgPooling33, StubConv7117, StubDense, StubDilConv33, StubDilConv55,
-    StubMaxPooling33, StubReLU, StubSepConv33, StubSepConv55, StubSepConv77,
-    get_batch_norm_class, get_conv_class, get_dropout_class, get_pooling_class,
-    is_layer)
+from nni.networkmorphism_tuner.layers import (StubAvgPooling33, StubConv7117,
+                                              StubDense, StubDilConv33,
+                                              StubDilConv55, StubMaxPooling33,
+                                              StubReLU, StubSepConv33,
+                                              StubSepConv55, StubSepConv77,
+                                              get_batch_norm_class,
+                                              get_conv_class,
+                                              get_dropout_class,
+                                              get_pooling_class, is_layer)
 from nni.networkmorphism_tuner.utils import Constant
 
 

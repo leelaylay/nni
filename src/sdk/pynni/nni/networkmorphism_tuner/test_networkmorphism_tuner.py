@@ -20,18 +20,18 @@
 
 
 import json
-from unittest import TestCase, main
 from copy import deepcopy
+from unittest import TestCase, main
+
 import torch
 
 from nni.networkmorphism_tuner.graph import graph_to_json, json_to_graph
-from nni.networkmorphism_tuner.graph_transformer import (
-    to_deeper_graph,
-    to_skip_connection_graph,
-    to_wider_graph,
-)
+from nni.networkmorphism_tuner.graph_transformer import (to_deeper_graph,
+                                                         to_skip_connection_graph,
+                                                         to_wider_graph)
 from nni.networkmorphism_tuner.layers import layer_description_extractor
-from nni.networkmorphism_tuner.networkmorphism_tuner import NetworkMorphismTuner
+from nni.networkmorphism_tuner.networkmorphism_tuner import \
+    NetworkMorphismTuner
 from nni.networkmorphism_tuner.nn import CnnGenerator
 
 

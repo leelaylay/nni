@@ -18,21 +18,21 @@
 # OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ==================================================================================================
 
-import os
 import json
 import math
+import os
 import random
 from copy import deepcopy
 from functools import total_ordering
 from queue import PriorityQueue
 
+import lightgbm as lgb
 import numpy as np
+
+from nni.networkmorphism_tuner.graph import graph_to_json, json_to_graph
 from nni.networkmorphism_tuner.graph_transformer import transform
 from nni.networkmorphism_tuner.layers import is_layer
 from nni.networkmorphism_tuner.utils import Constant, OptimizeMode
-from nni.networkmorphism_tuner.graph import graph_to_json, json_to_graph
-
-import lightgbm as lgb
 
 
 class IncrementalRegressionProcess:

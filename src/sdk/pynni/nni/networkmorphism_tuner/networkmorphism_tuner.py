@@ -20,16 +20,15 @@
 
 import logging
 import os
-import string
 import random
-
-from nni.tuner import Tuner
-from nni.networkmorphism_tuner.nn_optimizer import NNOptimizer
-from nni.networkmorphism_tuner.nn import CnnGenerator, MlpGenerator
-from nni.networkmorphism_tuner.utils import Constant, OptimizeMode
+import string
 
 from nni.networkmorphism_tuner.graph import graph_to_json, json_to_graph
 from nni.networkmorphism_tuner.graph_transformer import transform
+from nni.networkmorphism_tuner.nn import CnnGenerator, MlpGenerator
+from nni.networkmorphism_tuner.nn_optimizer import NNOptimizer
+from nni.networkmorphism_tuner.utils import Constant, OptimizeMode
+from nni.tuner import Tuner
 
 logger = logging.getLogger("NetworkMorphism_AutoML")
 
@@ -122,7 +121,7 @@ class NetworkMorphismTuner(Tuner):
         new_father_id = None
         generated_graph = None
         if not self.training_queue:
-            new_father_id, generated_graph, guess_metric = self.generate()
+            new_father_id, generated_graph, guess_metric = self.generate(parameter_id)
             new_model_id = self.model_count
             self.model_count += 1
             self.training_queue.append((generated_graph, new_father_id,
@@ -177,8 +176,11 @@ class NetworkMorphismTuner(Tuner):
         if self.verbose:
             logger.info("Initialization finished.")
 
-    def generate(self):
+    def generate(self, sequence_id):
         """Generate the next neural architecture.
+        Parameters
+        ----------
+        sequence_id : int 
 
         Returns
         -------
@@ -205,12 +207,20 @@ class NetworkMorphismTuner(Tuner):
 
         if new_father_id is None:
             new_father_id = 0
+            # generate initial graph
             init_graph = self.generators[0](
                 self.n_classes, self.input_shape).generate(
-                    self.default_model_len, self.default_model_width)        
+                    self.default_model_len, self.default_model_width)
+
+            if not sequence_id:
+                # the first graph
+                generated_graph = init_graph
+            else:
+                # sopprt parallel model generating
+                candidate_graphs = transform(init_graph)
+                generated_graph = random.choice(candidate_graphs)
             guess_metric = 0.0
-            candidate_graphs = transform(init_graph)
-            generated_graph = random.choice(candidate_graphs)
+           
 
         return new_father_id, generated_graph, guess_metric
 

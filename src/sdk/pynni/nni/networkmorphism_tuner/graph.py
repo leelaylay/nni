@@ -20,39 +20,32 @@
 
 import json
 from collections import Iterable
-from copy import deepcopy, copy
+from copy import copy, deepcopy
 from queue import Queue
 
 import numpy as np
 import torch
 
-from nni.networkmorphism_tuner.layer_transformer import (
-    add_noise,
-    wider_bn,
-    wider_next_conv,
-    wider_next_dense,
-    wider_pre_conv,
-    wider_pre_dense,
-    init_dense_weight,
-    init_conv_weight,
-    init_bn_weight,
-)
-from nni.networkmorphism_tuner.layers import (
-    StubAdd,
-    StubConcatenate,
-    StubReLU,
-    get_batch_norm_class,
-    get_conv_class,
-    is_layer,
-    layer_width,
-    set_keras_weight_to_stub,
-    set_stub_weight_to_keras,
-    set_stub_weight_to_torch,
-    set_torch_weight_to_stub,
-    to_real_keras_layer,
-    layer_description_extractor,
-    layer_description_builder,
-)
+from nni.networkmorphism_tuner.layer_transformer import (add_noise,
+                                                         init_bn_weight,
+                                                         init_conv_weight,
+                                                         init_dense_weight,
+                                                         wider_bn,
+                                                         wider_next_conv,
+                                                         wider_next_dense,
+                                                         wider_pre_conv,
+                                                         wider_pre_dense)
+from nni.networkmorphism_tuner.layers import (StubAdd, StubConcatenate,
+                                              StubReLU, get_batch_norm_class,
+                                              get_conv_class, is_layer,
+                                              layer_description_builder,
+                                              layer_description_extractor,
+                                              layer_width,
+                                              set_keras_weight_to_stub,
+                                              set_stub_weight_to_keras,
+                                              set_stub_weight_to_torch,
+                                              set_torch_weight_to_stub,
+                                              to_real_keras_layer)
 from nni.networkmorphism_tuner.utils import Constant
 
 
