@@ -165,6 +165,7 @@ class Graph:
         """
         if isinstance(input_node_id, Iterable):
             layer.input = list(map(lambda x: self.node_list[x], input_node_id))
+            print(layer)
             output_node_id = self._add_node(Node(layer.output_shape))
             for node_id in input_node_id:
                 self._add_edge(layer, node_id, output_node_id)

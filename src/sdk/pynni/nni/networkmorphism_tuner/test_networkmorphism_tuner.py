@@ -42,8 +42,9 @@ class NetworkMorphismTestCase(TestCase):
     def test_graph_generate(self):
         """ unittest fort graph generate()
         """
+
         graph_init = CnnGenerator(10, (32, 32, 3)).generate()
-        json_out = graph_to_json(graph_init, "temp.json")
+        graph_to_json(graph_init, "temp.json")
         torch_model = graph_init.produce_torch_model()
         input_tensor = torch.randn(1, 32, 32, 3)
         ouput_tensor = torch_model(input_tensor)
@@ -59,54 +60,12 @@ class NetworkMorphismTestCase(TestCase):
         graph_init = to_wider_graph(deepcopy(graph_init))
         graph_init = to_deeper_graph(deepcopy(graph_init))
         graph_init = to_skip_connection_graph(deepcopy(graph_init))
+
         json_out = graph_to_json(graph_init, "temp.json")
-
         graph_recover = json_to_graph(json_out)
+        json_out_recover = graph_to_json(graph_recover, "temp_recover.json")
 
-        # compare all data in graph
-        self.assertEqual(graph_init.input_shape, graph_recover.input_shape)
-        self.assertEqual(graph_init.weighted, graph_recover.weighted)
-        self.assertEqual(
-            graph_init.layer_id_to_input_node_ids,
-            graph_recover.layer_id_to_input_node_ids,
-        )
-        self.assertEqual(graph_init.adj_list, graph_recover.adj_list)
-        self.assertEqual(graph_init.reverse_adj_list, graph_recover.reverse_adj_list)
-        self.assertEqual(
-            len(graph_init.operation_history), len(graph_recover.operation_history)
-        )
-        self.assertEqual(graph_init.n_dim, graph_recover.n_dim)
-        self.assertEqual(graph_init.conv, graph_recover.conv)
-        self.assertEqual(graph_init.batch_norm, graph_recover.batch_norm)
-        self.assertEqual(graph_init.vis, graph_recover.vis)
-
-        node_list_init = [node.shape for node in graph_init.node_list]
-        node_list_recover = [node.shape for node in graph_recover.node_list]
-        self.assertEqual(node_list_init, node_list_recover)
-        self.assertEqual(len(graph_init.node_to_id), len(graph_recover.node_to_id))
-        layer_list_init = [
-            layer_description_extractor(item, graph_init.node_to_id)
-            for item in graph_init.layer_list
-        ]
-        layer_list_recover = [
-            layer_description_extractor(item, graph_recover.node_to_id)
-            for item in graph_recover.layer_list
-        ]
-        self.assertEqual(layer_list_init, layer_list_recover)
-
-        node_to_id_init = [graph_init.node_to_id[node] for node in graph_init.node_list]
-        node_to_id_recover = [
-            graph_recover.node_to_id[node] for node in graph_recover.node_list
-        ]
-        self.assertEqual(node_to_id_init, node_to_id_recover)
-
-        layer_to_id_init = [
-            graph_init.layer_to_id[layer] for layer in graph_init.layer_list
-        ]
-        layer_to_id_recover = [
-            graph_recover.layer_to_id[layer] for layer in graph_recover.layer_list
-        ]
-        self.assertEqual(layer_to_id_init, layer_to_id_recover)
+        self.assertEqual(json_out, json_out_recover)
 
     def test_to_wider_graph(self):
         """ unittest for to_wider_graph function
@@ -117,7 +76,7 @@ class NetworkMorphismTestCase(TestCase):
         graph_recover = json_to_graph(json_out)
         wider_graph = to_wider_graph(deepcopy(graph_recover))
         model = wider_graph.produce_torch_model()
-        out = model(torch.ones(1, 3, 32, 32))
+        out = model(torch.randn(1, 3, 32, 32))
         self.assertEqual(out.shape, torch.Size([1, 10]))
 
     def test_to_deeper_graph(self):
@@ -129,7 +88,7 @@ class NetworkMorphismTestCase(TestCase):
         graph_recover = json_to_graph(json_out)
         deeper_graph = to_wider_graph(deepcopy(graph_recover))
         model = deeper_graph.produce_torch_model()
-        out = model(torch.ones(1, 3, 32, 32))
+        out = model(torch.randn(1, 3, 32, 32))
         self.assertEqual(out.shape, torch.Size([1, 10]))
 
     def test_to_skip_connection_graph(self):
@@ -141,7 +100,7 @@ class NetworkMorphismTestCase(TestCase):
         graph_recover = json_to_graph(json_out)
         skip_connection_graph = to_wider_graph(deepcopy(graph_recover))
         model = skip_connection_graph.produce_torch_model()
-        out = model(torch.ones(1, 3, 32, 32))
+        out = model(torch.randn(1, 3, 32, 32))
         self.assertEqual(out.shape, torch.Size([1, 10]))
 
     def test_generate_parameters(self):
