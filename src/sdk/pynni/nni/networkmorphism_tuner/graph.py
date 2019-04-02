@@ -163,8 +163,11 @@ class Graph:
         Returns:
             output_node_id: An integer. The ID of the output node of the layer.
         """
+        print(input_node_id)
         if isinstance(input_node_id, Iterable):
             layer.input = list(map(lambda x: self.node_list[x], input_node_id))
+            # todo cancate two results together
+            print(layer.input)
             print(layer)
             output_node_id = self._add_node(Node(layer.output_shape))
             for node_id in input_node_id:
