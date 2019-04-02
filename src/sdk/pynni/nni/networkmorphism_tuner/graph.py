@@ -166,11 +166,22 @@ class Graph:
         if isinstance(input_node_id, Iterable):
             # if there are multi inputs, concate them togther
             inputs_list = list(map(lambda x: self.node_list[x], input_node_id))
-            layer.input = 
-            # todo cancate two results together
-            output_node_id = self._add_node(Node(layer.output_shape))
+
+            # to cancate input together
+            concat_layer = StubConcatenate()
+            concat_layer.input = inputs_list
+            concat_output_node_id = self._add_node(Node(concat_layer.output_shape))
+
             for node_id in input_node_id:
-                self._add_edge(layer, node_id, output_node_id)
+                self._add_edge(concat_layer, node_id, concat_output_node_id)
+            
+            # restore output and its shapoe
+            concat_layer.output = self.node_list[concat_output_node_id]
+            self.node_list[concat_output_node_id].shape = concat_layer.output_shape
+
+            layer.input = self.node_list[concat_output_node_id]
+            output_node_id = self._add_node(Node(layer.output_shape))
+            self._add_edge(layer, concat_output_node_id, output_node_id)
 
         else:
             layer.input = self.node_list[input_node_id]
@@ -530,6 +541,7 @@ class Graph:
         concat_output_node_id = self._add_node(Node(concat_layer.output_shape))
         self._add_edge(concat_layer, concat_input_node_id, concat_output_node_id)
         self._add_edge(concat_layer, skip_output_id, concat_output_node_id)
+        # restore output and its shapoe
         concat_layer.output = self.node_list[concat_output_node_id]
         self.node_list[concat_output_node_id].shape = concat_layer.output_shape
 
