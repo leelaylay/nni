@@ -95,7 +95,7 @@ def to_skip_connection_graph(graph):
 def to_add_multibranch_graph(graph):
     ''' skip connection graph
     '''
-    graph.to_add_multibranch_model(_id)
+    graph.to_add_multibranch_model()
     return graph
 
 

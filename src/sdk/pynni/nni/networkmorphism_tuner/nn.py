@@ -116,7 +116,7 @@ class CnnGenerator(NetworkGenerator):
                     output_node_id,
                 )
                 output_node_id_1 = graph.add_layer(
-                    StubReLUConvBN(temp_input_channel, model_width,
+                    StubReLUConvBN(model_width, model_width,
                                    kernel_size=1, stride=1, padding=0),
                     output_node_id,
                 )
@@ -127,12 +127,12 @@ class CnnGenerator(NetworkGenerator):
                     output_node_id,
                 )
                 output_node_id_1 = graph.add_layer(
-                    StubReLUConvBN(temp_input_channel, model_width,
+                    StubReLUConvBN(model_width, model_width,
                                    kernel_size=1, stride=1, padding=0),
                     output_node_id,
                 )
-            # concat two layers
-            output_node_id = [output_node_id_0, output_node_id_1]
+            # add 
+            output_node_id = [output_node_id, output_node_id_1]
 
             # reduction layer using maxpooling or avgpooling
             if i in [model_len // 3, 2 * model_len // 3]:
