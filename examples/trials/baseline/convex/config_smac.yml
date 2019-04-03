@@ -1,8 +1,8 @@
 authorName: default
-experimentName: example_auto-gbdt
+experimentName: example_auto-gbdt-SMAC
 trialConcurrency: 1
 maxExecDuration: 24h
-maxTrialNum: 10000
+maxTrialNum: 1000
 #choice: local, remote, pai
 trainingServicePlatform: local
 searchSpacePath: search_space.json
@@ -11,11 +11,11 @@ useAnnotation: false
 tuner:
   #choice: TPE, Random, Anneal, Evolution, BatchTuner, MetisTuner
   #SMAC (SMAC should be installed through nnictl)
-  builtinTunerName: TPE
+  builtinTunerName: SMAC
   classArgs:
     #choice: maximize, minimize
     optimize_mode: minimize
 trial:
-  command: python3 main.py
+  command: /home/xuehui/anaconda3/bin/python3 main_solo.py
   codeDir: .
   gpuNum: 0
