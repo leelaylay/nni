@@ -19,6 +19,6 @@ advisor:
     #choice: maximize, minimize
     optimize_mode: minimize
 trial:
-  command: /home/xuehui/anaconda3/bin/python main_advisor.py
+  command: /home/XXX/anaconda3/bin/python main_advisor.py
   codeDir: .
   gpuNum: 0

@@ -16,6 +16,6 @@ tuner:
     #choice: maximize, minimize
     optimize_mode: minimize
 trial:
-  command: /home/xuehui/anaconda3/bin/python main.py
+  command: /home/XXX/anaconda3/bin/python main.py
   codeDir: .
   gpuNum: 0

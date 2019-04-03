@@ -13,6 +13,6 @@ tuner:
   #SMAC (SMAC should be installed through nnictl)
   builtinTunerName: BatchTuner
 trial:
-  command: /home/xuehui/anaconda3/bin/python3 main_solo.py
+  command: /home/XXX/anaconda3/bin/python3 main_solo.py
   codeDir: .
   gpuNum: 0
