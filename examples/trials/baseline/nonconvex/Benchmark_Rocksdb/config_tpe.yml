@@ -14,7 +14,7 @@ tuner:
   builtinTunerName: TPE
   classArgs:
     #choice: maximize, minimize
-    optimize_mode: minimize
+    optimize_mode: maximize
 trial:
   command: /home/XXX/anaconda3/bin/python3 main.py
   codeDir: .
