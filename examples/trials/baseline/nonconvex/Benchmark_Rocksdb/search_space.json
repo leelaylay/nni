@@ -1,0 +1,46 @@
+{
+    "max_background_compactions": {
+        "_type": "range_int",
+        "_value": [1, 256]
+    },
+    "block_size": {
+        "_type": "range_int",
+        "_value": [1024, 524288]
+    },
+    "write_buffer_size": {
+        "_type": "range_int",
+        "_value": [1048576, 134217728]
+    },
+    "max_write_buffer_number": {
+        "_type": "range_int",
+        "_value": [1, 128]
+    },
+    "min_write_buffer_number_to_merge":{
+        "_type": "range_int",
+        "_value": [1, 32]
+    },
+    "level0_file_num_compaction_trigger":{
+        "_type": "range_int",
+        "_value": [1, 256]
+    },
+    "level0_slowdown_writes_trigger":{
+        "_type": "range_int",
+        "_value": [1, 1024]
+    },
+    "level0_stop_writes_trigger":{
+        "_type": "range_int",
+        "_value": [1, 1024]
+    }, 
+    "cache_size":{
+        "_type": "range_int",
+        "_value": [1048576, 33554432]
+    },
+    "compaction_readahead_size":{
+        "_type": "range_int",
+        "_value": [0, 33554432]
+    },
+    "new_table_reader_for_compaction_inputs":{
+        "_type": "range_int",
+        "_value": [0, 1]
+    }
+}
