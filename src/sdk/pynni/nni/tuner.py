@@ -108,13 +108,14 @@ class Tuner(Recoverable):
             raise RuntimeError('Incorrect final result: the final result for %s should be float/int, or a dict which has a key named "default" whose value is float/int.' % str(self.__class__)) 
         return reward
 
-    def calculate_generate_parameters_time(self, func):
+    def calculate_generate_parameters_time(func):
         """Decorator to calculate the time of generate_parameters.
         """
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(self, *args, **kwargs):
             start_time = time.time()  
-            func(*args, **kwargs) 
+            result = func(*args, **kwargs) 
             end_time = time.time()  
-            _logger.debug("%s run time is %.2f" %(func.__name__ , end_time-start_time))
+            print("%s run time is : %f" %(func.__name__ , end_time-start_time))
+            return result
         return wrapper

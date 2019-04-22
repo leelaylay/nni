@@ -21,7 +21,7 @@ LOG = logging.getLogger('RocksDB-Benchmark')
 
 def get_default_parameters():
     params = {
-        "benchmarks":'fillrandom',
+        "benchmarks":'readrandom',
         'target_file_size_base': 134217728,
         'max_bytes_for_level_base': 67108864,
         'num_levels': 6,
@@ -43,17 +43,17 @@ def get_default_parameters():
 
 
 def add_offset(PARAMS):
-    PARAMS['max_background_compactions'] =  round(PARAMS['max_background_compactions'] + 1)
-    PARAMS['block_size'] = round(PARAMS['block_size'] + 1024)
-    PARAMS['write_buffer_size'] = round(PARAMS['write_buffer_size'] + 1048576)
-    PARAMS['max_write_buffer_number'] = round(PARAMS['max_write_buffer_number'] + 1)
-    PARAMS['min_write_buffer_number_to_merge'] = round(PARAMS['min_write_buffer_number_to_merge'] + 1)
-    PARAMS['level0_file_num_compaction_trigger'] =round(PARAMS['level0_file_num_compaction_trigger'] + 1)
-    PARAMS['level0_slowdown_writes_trigger'] = round(PARAMS['level0_slowdown_writes_trigger'] + 1)
-    PARAMS['level0_stop_writes_trigger'] = round(PARAMS['level0_stop_writes_trigger'] + 1)
-    PARAMS['cache_size'] = round(PARAMS['cache_size'] + 1048576)
-    PARAMS['compaction_readahead_size'] = round(PARAMS['compaction_readahead_size'])
-    PARAMS['new_table_reader_for_compaction_inputs'] = round(PARAMS['new_table_reader_for_compaction_inputs'])
+    PARAMS['max_background_compactions'] += 1
+    PARAMS['block_size'] += 1024
+    PARAMS['write_buffer_size'] += 1048576
+    PARAMS['max_write_buffer_number'] += 1
+    PARAMS['min_write_buffer_number_to_merge'] += 1
+    PARAMS['level0_file_num_compaction_trigger'] += 1
+    PARAMS['level0_slowdown_writes_trigger'] += 1
+    PARAMS['level0_stop_writes_trigger'] += 1
+    PARAMS['cache_size'] += 1048576
+    # PARAMS['compaction_readahead_size']+=0
+    # PARAMS['new_table_reader_for_compaction_inputs']+=0
 
     return PARAMS
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         PARAMS = add_offset(PARAMS)
 
         result = bench(program='./db_bench', **PARAMS)
-        ops_sec = result['fillrandom']
+        ops_sec = result['readrandom']
         LOG.debug("ops_sec:", ops_sec)
 
         nni.report_final_result(ops_sec)

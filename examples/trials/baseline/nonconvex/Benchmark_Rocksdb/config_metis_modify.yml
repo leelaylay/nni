@@ -16,6 +16,6 @@ tuner:
     #choice: maximize, minimize
     optimize_mode: maximize
 trial:
-  command: /home/XXX/anaconda3/bin/python3 main_metis.py
+  command: /home/XXX/anaconda3/bin/python3 main.py
   codeDir: .
   gpuNum: 0
