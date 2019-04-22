@@ -2,7 +2,7 @@ authorName: default
 experimentName: example_auto-gbdt-Random
 trialConcurrency: 1
 maxExecDuration: 1000h
-maxTrialNum: 100
+maxTrialNum: 110
 #choice: local, remote, pai
 trainingServicePlatform: local
 searchSpacePath: search_space.json

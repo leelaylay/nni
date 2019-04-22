@@ -208,6 +208,7 @@ class HyperoptTuner(Tuner):
                                 max_evals=-1, rstate=rstate, verbose=0)
         self.rval.catch_eval_exceptions = False
 
+    @Tuner.calculate_generate_parameters_time
     def generate_parameters(self, parameter_id):
         """
         Returns a set of trial (hyper-)parameters, as a serializable object.
