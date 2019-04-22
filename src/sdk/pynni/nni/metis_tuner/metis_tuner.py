@@ -64,7 +64,7 @@ class MetisTuner(Tuner):
     https://www.microsoft.com/en-us/research/publication/metis-robustly-tuning-tail-latencies-cloud-systems/
     """
 
-    def __init__(self, optimize_mode="maximize", no_resampling=True, no_candidates=True,
+    def __init__(self, optimize_mode="maximize", no_resampling=True, no_candidates=False,
                  selection_num_starting_points=600, cold_start_num=10, exploration_probability=0.9):
         """
         Parameters
@@ -178,7 +178,7 @@ class MetisTuner(Tuner):
             output[self.key_order[i]] = param
         return output
 
-
+    @Tuner.calculate_generate_parameters_time
     def generate_parameters(self, parameter_id):
         """Generate next parameter for trial
         If the number of trial result is lower than cold start number,
@@ -391,7 +391,7 @@ class MetisTuner(Tuner):
         # ===== STEP 7: If current optimal hyperparameter occurs in the history or exploration probability is less than the threshold, take next config as exploration step  =====
         outputs = self._pack_output(lm_current['hyperparameter'])
         ap = random.uniform(0, 1)
-        if outputs in self.history_parameters or ap<=self.exploration_probability:
+        if outputs in self.history_parameters or ap <=self.exploration_probability:
             if next_candidate is not None:
                 outputs = self._pack_output(next_candidate['hyperparameter'])
             else:

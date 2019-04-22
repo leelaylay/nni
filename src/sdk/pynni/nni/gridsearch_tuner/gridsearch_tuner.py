@@ -133,6 +133,7 @@ class GridSearchTuner(Tuner):
         '''
         self.expanded_search_space = self.json2paramater(search_space)
 
+    @Tuner.calculate_generate_parameters_time
     def generate_parameters(self, parameter_id):
         self.count += 1
         if self.count > len(self.expanded_search_space)-1:

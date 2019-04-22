@@ -122,6 +122,7 @@ class NetworkMorphismTuner(Tuner):
         """
         self.search_space = search_space
 
+    @Tuner.calculate_generate_parameters_time
     def generate_parameters(self, parameter_id):
         """
         Returns a set of trial neural architecture, as a serializable object.

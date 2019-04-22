@@ -207,6 +207,7 @@ class SMACTuner(Tuner):
                 converted_dict[key] = value
         return converted_dict
 
+    @Tuner.calculate_generate_parameters_time
     def generate_parameters(self, parameter_id):
         """generate one instance of hyperparameters
         
@@ -230,6 +231,7 @@ class SMACTuner(Tuner):
                 self.total_data[parameter_id] = challenger
                 return self.convert_loguniform_categorical(challenger.get_dictionary())
 
+    @Tuner.calculate_generate_parameters_time
     def generate_multiple_parameters(self, parameter_id_list):
         """generate mutiple instances of hyperparameters
         

@@ -3,9 +3,9 @@
 #
 # MIT License
 #
-# Permission is hereby granted, free of charge, 
+# Permission is hereby granted, free of charge,
 # to any person obtaining a copy of this software and associated
-# documentation files (the "Software"), 
+# documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 # to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -26,27 +26,29 @@ import nni
 
 LOG = logging.getLogger('convex')
 
+
 def loss_function_1(params):
     x = params['x']
     y = params['y']
     z = params['z']
-    loss = math.pow(x-30+0.1,2)*math.pow(y-40+0.1,2)*math.pow(x+z-50+0.1,2)
+    loss = math.log(math.pow(x - 30 + 0.1, 2) * math.pow(y - 40 + 0.1, 2) * math.pow(
+        x + z - 50 + 0.1, 2)+1)
     return loss
+
 
 def loss_function_2(params):
     x = params['x']
     y = params['y']
     z = params['z']
-    loss = math.pow(x-30+0.1,2)+math.pow(y-40+0.1,2)+math.pow(z-50+0.1,2)
+    loss = math.pow(x - 30 + 0.1, 2) + math.pow(y - 40 + 0.1, 2) + math.pow(
+        z - 50 + 0.1, 2)
     return loss
 
+
 def get_default_parameters():
-    params = {
-        'x': 10,
-        'y': 10,
-        'z': 10
-    }
+    params = {'x': 10, 'y': 10, 'z': 10}
     return params
+
 
 if __name__ == '__main__':
     try:

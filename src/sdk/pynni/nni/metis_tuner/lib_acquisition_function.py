@@ -142,7 +142,7 @@ def _lowest_confidence(x, fun_prediction, fun_prediction_args,
     ci = sys.maxsize
     if (minimize_constraints_fun is None) or (minimize_constraints_fun(x) is True):
         mu, sigma = fun_prediction(x, *fun_prediction_args)
-        ci = (sigma * 1.96 * 2) / mu
+        ci = abs((sigma * 1.96 * 2) / mu)
         # We want ci to be as large as possible
         # (i.e., as small as possible for minimize(...),
         # because this would mean lowest confidence

@@ -1,0 +1,14 @@
+{
+    "x": {
+        "_type": "randint",
+        "_value": [1000]
+    },
+    "y": {
+        "_type": "randint",
+        "_value": [1000]
+    },
+    "z": {
+        "_type": "randint",
+        "_value": [1000]
+    }
+}

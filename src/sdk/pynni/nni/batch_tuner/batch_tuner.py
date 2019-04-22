@@ -81,6 +81,7 @@ class BatchTuner(Tuner):
         """
         self.values = self.is_valid(search_space)
 
+    @Tuner.calculate_generate_parameters_time
     def generate_parameters(self, parameter_id):
         """Returns a dict of trial (hyper-)parameters, as a serializable object.
 

@@ -22,6 +22,8 @@
 import logging
 
 import nni
+import time
+from functools import wraps
 from .recoverable import Recoverable
 
 _logger = logging.getLogger(__name__)
@@ -104,4 +106,15 @@ class Tuner(Recoverable):
             reward = value[scalar_key]
         else:
             raise RuntimeError('Incorrect final result: the final result for %s should be float/int, or a dict which has a key named "default" whose value is float/int.' % str(self.__class__)) 
-        return reward 
+        return reward
+
+    def calculate_generate_parameters_time(self, func):
+        """Decorator to calculate the time of generate_parameters.
+        """
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()  
+            func(*args, **kwargs) 
+            end_time = time.time()  
+            _logger.debug("%s run time is %.2f" %(func.__name__ , end_time-start_time))
+        return wrapper

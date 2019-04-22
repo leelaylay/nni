@@ -1,0 +1,14 @@
+{
+    "x": {
+        "_type": "quniform",
+        "_value": [1,1000,1]
+    },
+    "y": {
+        "_type": "quniform",
+        "_value": [1,1000,1]
+    },
+    "z": {
+        "_type": "quniform",
+        "_value": [1,1000,1]
+    }
+}

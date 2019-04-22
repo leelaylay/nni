@@ -233,6 +233,7 @@ class EvolutionTuner(Tuner):
                 self.searchspace_json, is_rand, self.random_state)
             self.population.append(Individual(config=config))
 
+    @Tuner.calculate_generate_parameters_time
     def generate_parameters(self, parameter_id):
         """Returns a dict of trial (hyper-)parameters, as a serializable object.
 
