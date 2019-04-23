@@ -64,7 +64,7 @@ class MetisTuner(Tuner):
     https://www.microsoft.com/en-us/research/publication/metis-robustly-tuning-tail-latencies-cloud-systems/
     """
 
-    def __init__(self, optimize_mode="maximize", no_resampling=True, no_candidates=False,
+    def __init__(self, optimize_mode="maximize", no_resampling=True, no_candidates=True,
                  selection_num_starting_points=600, cold_start_num=10, exploration_probability=0.9):
         """
         Parameters
