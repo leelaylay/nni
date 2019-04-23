@@ -38,6 +38,7 @@ import nni.metis_tuner.Regression_GP.OutlierDetection as gp_outlier_detection
 import nni.metis_tuner.Regression_GP.Prediction as gp_prediction
 import nni.metis_tuner.Regression_GP.Selection as gp_selection
 from nni.tuner import Tuner
+from nni.utils import extract_scalar_reward
 
 logger = logging.getLogger("Metis_Tuner_AutoML")
 
@@ -95,7 +96,7 @@ class MetisTuner(Tuner):
         self.samples_x = []
         self.samples_y = []
         self.samples_y_aggregation = []
-        self.history_parameters = []
+        self.total_data = []
         self.space = None
         self.no_resampling = no_resampling
         self.no_candidates = no_candidates
@@ -106,6 +107,7 @@ class MetisTuner(Tuner):
         self.exploration_probability = exploration_probability
         self.minimize_constraints_fun = None
         self.minimize_starting_points = None
+        self.supplement_data_num = 0
 
 
     def update_search_space(self, search_space):
@@ -220,7 +222,7 @@ class MetisTuner(Tuner):
         value : dict/float
             if value is dict, it should have "default" key.
         """
-        value = self.extract_scalar_reward(value)
+        value = extract_scalar_reward(value)
         if self.optimize_mode == OptimizeMode.Maximize:
             value = -value
 
@@ -391,15 +393,35 @@ class MetisTuner(Tuner):
         # ===== STEP 7: If current optimal hyperparameter occurs in the history or exploration probability is less than the threshold, take next config as exploration step  =====
         outputs = self._pack_output(lm_current['hyperparameter'])
         ap = random.uniform(0, 1)
-        if outputs in self.history_parameters or ap <=self.exploration_probability:
+        if outputs in self.total_data or ap<=self.exploration_probability:
             if next_candidate is not None:
                 outputs = self._pack_output(next_candidate['hyperparameter'])
             else:
                 random_parameter = _rand_init(x_bounds, x_types, 1)[0]
                 outputs = self._pack_output(random_parameter)
-        self.history_parameters.append(outputs)
+        self.total_data.append(outputs)
         return outputs
 
+    def import_data(self, data):
+        """Import additional data for tuning
+        Parameters
+        ----------
+        data:
+            a list of dictionarys, each of which has at least two keys, 'parameter' and 'value'
+        """
+        _completed_num = 0
+        for trial_info in data:
+            logger.info("Importing data, current processing progress %s / %s" %(_completed_num, len(data)))
+            _completed_num += 1
+            assert "parameter" in trial_info
+            _params = trial_info["parameter"]
+            assert "value" in trial_info
+            _value = trial_info['value']
+            self.supplement_data_num += 1
+            _parameter_id = '_'.join(["ImportData", str(self.supplement_data_num)])
+            self.total_data.append(_params)
+            self.receive_trial_result(parameter_id=_parameter_id, parameters=_params, value=_value)
+        logger.info("Successfully import data to metis tuner.")
 
 def _rand_with_constraints(x_bounds, x_types):
     outputs = None

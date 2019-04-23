@@ -96,3 +96,6 @@ class BatchTuner(Tuner):
 
     def receive_trial_result(self, parameter_id, parameters, value):
         pass
+
+    def import_data(self, data):
+        pass

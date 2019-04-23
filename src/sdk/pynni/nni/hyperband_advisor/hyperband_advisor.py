@@ -31,7 +31,7 @@ import json_tricks
 
 from nni.protocol import CommandType, send
 from nni.msg_dispatcher_base import MsgDispatcherBase
-from nni.common import init_logger
+from nni.utils import extract_scalar_reward
 from .. import parameter_expressions
 
 _logger = logging.getLogger(__name__)
@@ -268,22 +268,6 @@ class Bracket():
         self.num_configs_to_run.append(len(hyper_configs))
         self.increase_i()
 
-def extract_scalar_reward(value, scalar_key='default'):
-    """
-    Raises
-    ------
-    RuntimeError
-        Incorrect final result: the final result should be float/int,
-        or a dict which has a key named "default" whose value is float/int.
-    """
-    if isinstance(value, float) or isinstance(value, int):
-        reward = value
-    elif isinstance(value, dict) and scalar_key in value and isinstance(value[scalar_key], (float, int)):
-        reward = value[scalar_key]
-    else:
-        raise RuntimeError('Incorrect final result: the final result for %s should be float/int, or a dict which has a key named "default" whose value is float/int.' % str(self.__class__)) 
-    return reward
-
 class Hyperband(MsgDispatcherBase):
     """Hyperband inherit from MsgDispatcherBase rather than Tuner, because it integrates both tuner's functions and assessor's functions.
     This is an implementation that could fully leverage available resources, i.e., high parallelism.
@@ -320,7 +304,7 @@ class Hyperband(MsgDispatcherBase):
     def load_checkpoint(self):
         pass
 
-    def save_checkpont(self):
+    def save_checkpoint(self):
         pass
 
     def handle_initialize(self, data):
@@ -333,7 +317,6 @@ class Hyperband(MsgDispatcherBase):
         """
         self.handle_update_search_space(data)
         send(CommandType.Initialized, '')
-        return True
 
     def handle_request_trial_jobs(self, data):
         """
@@ -345,21 +328,11 @@ class Hyperband(MsgDispatcherBase):
         for _ in range(data):
             self._request_one_trial_job()
 
-        return True
-
     def _request_one_trial_job(self):
         """get one trial job, i.e., one hyperparameter configuration."""
         if not self.generated_hyper_configs:
             if self.curr_s < 0:
-                # have tried all configurations
-                ret = {
-                    'parameter_id': '-1_0_0',
-                    'parameter_source': 'algorithm',
-                    'parameters': ''
-                }
-                send(CommandType.NoMoreTrialJobs, json_tricks.dumps(ret))
-                self.credit += 1
-                return True
+                self.curr_s = self.s_max
             _logger.debug('create a new bracket, self.curr_s=%d', self.curr_s)
             self.brackets[self.curr_s] = Bracket(self.curr_s, self.s_max, self.eta, self.R, self.optimize_mode)
             next_n, next_r = self.brackets[self.curr_s].get_n_r()
@@ -380,8 +353,6 @@ class Hyperband(MsgDispatcherBase):
         }
         send(CommandType.NewTrialJob, json_tricks.dumps(ret))
 
-        return True
-
     def handle_update_search_space(self, data):
         """data: JSON object, which is search space
         
@@ -392,8 +363,6 @@ class Hyperband(MsgDispatcherBase):
         """
         self.searchspace_json = data
         self.random_state = np.random.RandomState()
-
-        return True
 
     def handle_trial_end(self, data):
         """
@@ -423,8 +392,6 @@ class Hyperband(MsgDispatcherBase):
                 send(CommandType.NewTrialJob, json_tricks.dumps(ret))
                 self.credit -= 1
 
-        return True
-
     def handle_report_metric_data(self, data):
         """
         Parameters
@@ -450,7 +417,8 @@ class Hyperband(MsgDispatcherBase):
         else:
             raise ValueError('Data type not supported: {}'.format(data['type']))
 
-        return True
-
     def handle_add_customized_trial(self, data):
+        pass
+
+    def handle_import_data(self, data):
         pass
