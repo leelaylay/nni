@@ -112,7 +112,7 @@ class Tuner(Recoverable):
         """Decorator to calculate the time of generate_parameters.
         """
         @wraps(func)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(*args, **kwargs):
             start_time = time.time()  
             result = func(*args, **kwargs) 
             end_time = time.time()  

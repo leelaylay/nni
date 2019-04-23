@@ -15,6 +15,7 @@ tuner:
   classArgs:
     #choice: maximize, minimize
     optimize_mode: maximize
+    no_candidate: true
 trial:
   command: /home/XXX/anaconda3/bin/python3 main.py
   codeDir: .
